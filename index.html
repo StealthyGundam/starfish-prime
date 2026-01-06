@@ -66,8 +66,8 @@
   .grid-wrapper {
     flex: 1;
     display: flex;
-    justify-content: center;   /* horizontal center */
-    align-items: flex-start;   /* move grid upward */
+    justify-content: center;   
+    align-items: flex-start;   
     padding-top: clamp(8px, 6vh, 28px);
     padding-left: 20px;
     padding-right: 20px;
@@ -92,8 +92,9 @@
     color: orange;
   }
 
+  /* Changed solved color to yellow */
   .solved .cell {
-    color: white;
+    color: yellow;
   }
 </style>
 </head>
@@ -200,8 +201,7 @@ const grid = document.getElementById("grid");
 const keyInput = document.getElementById("key");
 const keywordInput = document.getElementById("keyword");
 
-// Numeric keypad is handled by inputmode="numeric"
-
+// Numeric keypad for key
 // Auto-uppercase keyword
 keywordInput.addEventListener("input", () => {
   const cursorPos = keywordInput.selectionStart;
