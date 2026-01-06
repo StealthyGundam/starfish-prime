@@ -66,10 +66,8 @@
   .grid-wrapper {
     flex: 1;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-
-    /* Dynamic vertical lift */
+    justify-content: center;   /* horizontal center */
+    align-items: flex-start;   /* move grid upward */
     padding-top: clamp(8px, 6vh, 28px);
     padding-left: 20px;
     padding-right: 20px;
@@ -89,11 +87,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-
-    /* Tighter font */
     font-size: clamp(9px, 1.9vw, 15px);
     line-height: 1;
-
     color: orange;
   }
 
@@ -106,7 +101,7 @@
 <body>
 <div class="container">
   <div class="inputs">
-    <input id="key" placeholder="Decryption Key" />
+    <input id="key" placeholder="Decryption Key" inputmode="numeric" pattern="\d*" />
     <input id="keyword" placeholder="Keyword" />
   </div>
 
@@ -205,8 +200,17 @@ const grid = document.getElementById("grid");
 const keyInput = document.getElementById("key");
 const keywordInput = document.getElementById("keyword");
 
+// Numeric keypad is handled by inputmode="numeric"
+
+// Auto-uppercase keyword
+keywordInput.addEventListener("input", () => {
+  const cursorPos = keywordInput.selectionStart;
+  keywordInput.value = keywordInput.value.toUpperCase();
+  keywordInput.setSelectionRange(cursorPos, cursorPos);
+  decrypt();
+});
+
 keyInput.addEventListener("input", decrypt);
-keywordInput.addEventListener("input", decrypt);
 
 decrypt();
 </script>
