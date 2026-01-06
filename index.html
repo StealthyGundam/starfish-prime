@@ -6,54 +6,33 @@
 <title>Cipher Grid Puzzle</title>
 
 <style>
-  * { box-sizing: border-box; user-select: none; }
-  html, body {
-    margin: 0; padding: 0; background: #000; color: #fff;
-    width: 100%; height: 100%; overflow: hidden;
-    font-family: monospace;
-  }
+* { box-sizing: border-box; user-select: none; }
+html, body { margin:0; padding:0; background:#000; color:#fff; width:100%; height:100%; overflow:hidden; font-family:monospace; }
 
-  .container {
-    display: flex; flex-direction: column; height: 100vh;
-    padding:
-      calc(8px + env(safe-area-inset-top))
-      calc(8px + env(safe-area-inset-right))
-      calc(8px + env(safe-area-inset-bottom))
-      calc(8px + env(safe-area-inset-left));
-    gap: 2px;
-  }
+.container { display:flex; flex-direction:column; height:100vh; padding:
+  calc(8px + env(safe-area-inset-top))
+  calc(8px + env(safe-area-inset-right))
+  calc(8px + env(safe-area-inset-bottom))
+  calc(8px + env(safe-area-inset-left));
+  gap:2px;
+}
 
-  .inputs {
-    display: flex; width: 100%; gap: 6px;
-    transition: opacity 0.5s ease;
-  }
+.inputs { display:flex; width:100%; gap:6px; transition:opacity 0.5s ease; }
+input { padding:8px; font-size:16px; background:#fff; color:#000; border:2px solid red; outline:none; }
+input.correct { border-color:green; }
+#key { width:40%; text-align:left; }
+#keyword { width:60%; text-align:left; }
 
-  input {
-    padding: 8px; font-size: 16px;
-    background: #fff; color: #000; border: 2px solid red; outline: none;
-  }
+.grid-wrapper { flex:1; display:flex; justify-content:center; align-items:flex-start;
+  padding-top:clamp(8px,6vh,28px); padding-left:20px; padding-right:20px; padding-bottom:20px;
+}
 
-  input.correct { border-color: green; }
+.grid { display:grid; grid-template-columns:repeat(20,1fr); grid-template-rows:repeat(20,1fr);
+  aspect-ratio:1/1; width:100%; max-width:min(92vw,92vh); }
 
-  #key { width: 40%; text-align: left; }
-  #keyword { width: 60%; text-align: left; }
-
-  .grid-wrapper {
-    flex: 1; display: flex; justify-content: center; align-items: flex-start;
-    padding-top: clamp(8px, 6vh, 28px); padding-left: 20px; padding-right: 20px; padding-bottom: 20px;
-  }
-
-  .grid {
-    display: grid; grid-template-columns: repeat(20, 1fr); grid-template-rows: repeat(20, 1fr);
-    aspect-ratio: 1 / 1; width: 100%; max-width: min(92vw, 92vh);
-  }
-
-  .cell {
-    display: flex; align-items: center; justify-content: center;
-    font-size: clamp(9px, 1.9vw, 15px); line-height: 1; color: white;
-  }
-
-  .solved .cell { color: limegreen; }
+.cell { display:flex; align-items:center; justify-content:center;
+  font-size:clamp(9px,1.9vw,15px); line-height:1; color:white; }
+.solved .cell { color:limegreen; }
 </style>
 </head>
 
@@ -70,89 +49,102 @@
 </div>
 
 <script>
+// Encryption parameters
 const PRIME_KEY = 23n;
 const MOD = 29n;
+
+// Base alphabet and cipher text
 const BASE_ALPHABET = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", " ", ",", "."];
 const CIPHER_TEXT =
-"TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN ,IG.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
+"XOHQAKLRHXBQHPAESNHE OFHELOHQXEKAIOFHGSLRQHIBMHBLH,XOHMEELABRX,.HSHVSASIBLH SMVBFOHXOHCSANOIHCB,XHES,XHSLIHXKLROFHUSASLPOIHUJHGSB,X.H,XOHPB,JHNLOCHXBQH BRBAHSLIHGOA,HQSGOFHS,HLBRX,.HOMV,JHQ,FOO,QHQBRXOIHSQHXOHIOVSF,OIH,EHQOF OHSHZKBO,HPSAAHEGHIK,J.HSAAOJQHFOMOMUOFOIHXBQHQMBAOHXBQHMOFPJHXBQHQ,OOAHFOQEA O.HGEFHLECHXOHCSQHRELOHUK,HXBQHVFEMBQOHFOMSBLOI.H,XOHMEELHCB,LOQQHSLIHUAOQQOIHXBQHFBRX,OEKQHVS,X.";
 
-if (CIPHER_TEXT.length !== 400) alert("Cipher text not 400 chars: " + CIPHER_TEXT.length);
-
-// Correct inputs
-const CORRECT_KEY = "11";
+// Correct keyword
 const CORRECT_KEYWORD = "SUNBLOCKER";
+
+if(CIPHER_TEXT.length!==400) alert("Cipher text not 400 chars: "+CIPHER_TEXT.length);
+
+// Compute modular inverse (decryption key)
+function modInverse(a, m) {
+  let m0 = m, t, q;
+  let x0 = 0n, x1 = 1n;
+  a = BigInt(a);
+
+  if (m === 1n) return 0n;
+
+  while (a > 1n) {
+    q = a / m;
+    t = m;
+    m = a % m;
+    a = t;
+
+    t = x0;
+    x0 = x1 - q * x0;
+    x1 = t;
+  }
+
+  if (x1 < 0n) x1 += m0;
+  return x1;
+}
+
+// Decryption key automatically calculated
+const CORRECT_KEY = modInverse(PRIME_KEY, MOD-1n).toString();
 
 // Utility
 function uniqueKeyword(word){
   const seen = new Set();
-  return [...word.toUpperCase()].filter(c => {
-    if (seen.has(c)) return false;
-    seen.add(c);
-    return true;
-  });
+  return [...word.toUpperCase()].filter(c=>{if(seen.has(c)) return false; seen.add(c); return true;});
 }
 
-// Cipher alphabet from keyword
 function buildCipherAlphabet(keyword){
-  const keyChars = uniqueKeyword(keyword).filter(c => BASE_ALPHABET.includes(c));
-  const remainder = BASE_ALPHABET.filter(c => !keyChars.includes(c));
+  const keyChars = uniqueKeyword(keyword).filter(c=>BASE_ALPHABET.includes(c));
+  const remainder = BASE_ALPHABET.filter(c=>!keyChars.includes(c));
   return [...keyChars, ...remainder];
 }
 
-// Modular exponentiation
 function modPow(base, exp, mod){
   let result = 1n;
-  base %= mod;
+  base%=mod;
   while(exp>0n){
-    if(exp&1n) result = (result * base) % mod;
-    exp >>= 1n;
-    base = (base*base)%mod;
+    if(exp&1n) result=(result*base)%mod;
+    exp>>=1n;
+    base=(base*base)%mod;
   }
   return result;
 }
 
-// Grid rendering
 function renderGrid(chars, solved){
   grid.innerHTML="";
-  grid.classList.toggle("solved", solved);
+  grid.classList.toggle("solved",solved);
   for(let i=0;i<400;i++){
     const cell=document.createElement("div");
     cell.className="cell";
-    cell.textContent = chars[i] || " ";
+    cell.textContent=chars[i]||" ";
     grid.appendChild(cell);
   }
 }
 
-// Main update function
+// Main update
 function update(){
   const keyValue = keyInput.value ? BigInt(keyInput.value) : 0n;
   const cipherAlphabet = buildCipherAlphabet(keywordInput.value);
 
-  let output = [];
+  let output=[];
   for(let char of CIPHER_TEXT){
     const idx = cipherAlphabet.indexOf(char);
-    if(idx===-1) { output.push(char); continue; }
+    if(idx===-1){output.push(char); continue;}
     const decIdx = Number(modPow(BigInt(idx), keyValue, MOD));
-    if(decIdx<0 || decIdx>=BASE_ALPHABET.length) output.push(char);
-    else output.push(BASE_ALPHABET[decIdx]);
+    output.push(BASE_ALPHABET[decIdx]||char);
   }
 
-  // Check if solved (exact input match)
-  const solved = (keyInput.value === CORRECT_KEY) && 
-                 (keywordInput.value.toUpperCase() === CORRECT_KEYWORD);
+  const solved = keyInput.value===CORRECT_KEY &&
+                 keywordInput.value.toUpperCase()===CORRECT_KEYWORD;
 
-  renderGrid(output, solved);
-  keyInput.classList.toggle("correct", solved);
-  keywordInput.classList.toggle("correct", solved);
+  renderGrid(output,solved);
+  keyInput.classList.toggle("correct",solved);
+  keywordInput.classList.toggle("correct",solved);
 
-  // Hide inputs only if solved
-  if(solved){
-    inputs.style.opacity="0";
-    inputs.style.pointerEvents="none";
-  } else {
-    inputs.style.opacity="1";
-    inputs.style.pointerEvents="auto";
-  }
+  if(solved){inputs.style.opacity="0"; inputs.style.pointerEvents="none";}
+  else {inputs.style.opacity="1"; inputs.style.pointerEvents="auto";}
 }
 
 // Elements
@@ -162,15 +154,13 @@ const keywordInput = document.getElementById("keyword");
 const inputs = document.getElementById("inputs");
 
 // Auto-uppercase keyword
-keywordInput.addEventListener("input", ()=>{
-  const cursor=keywordInput.selectionStart;
+keywordInput.addEventListener("input",()=>{
+  const c=keywordInput.selectionStart;
   keywordInput.value=keywordInput.value.toUpperCase();
-  keywordInput.setSelectionRange(cursor,cursor);
+  keywordInput.setSelectionRange(c,c);
   update();
 });
-
-// Key input
-keyInput.addEventListener("input", update);
+keyInput.addEventListener("input",update);
 
 // Initial render
 update();
