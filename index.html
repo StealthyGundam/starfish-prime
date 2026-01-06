@@ -38,6 +38,7 @@
     display: flex;
     width: 100%;
     gap: 6px;
+    transition: opacity 0.5s ease;
   }
 
   input {
@@ -92,7 +93,6 @@
     color: orange;
   }
 
-  /* Changed solved color to yellow */
   .solved .cell {
     color: yellow;
   }
@@ -101,7 +101,7 @@
 
 <body>
 <div class="container">
-  <div class="inputs">
+  <div id="inputs" class="inputs">
     <input id="key" placeholder="Decryption Key" inputmode="numeric" pattern="\d*" />
     <input id="keyword" placeholder="Keyword" />
   </div>
@@ -183,6 +183,15 @@ function decrypt() {
   renderGrid(output, solved);
   keyInput.classList.toggle("correct", solved);
   keywordInput.classList.toggle("correct", solved);
+
+  // Hide input boxes after solved
+  if (solved) {
+    inputs.style.opacity = "0";
+    inputs.style.pointerEvents = "none";
+  } else {
+    inputs.style.opacity = "1";
+    inputs.style.pointerEvents = "auto";
+  }
 }
 
 function renderGrid(chars, solved) {
@@ -200,6 +209,7 @@ function renderGrid(chars, solved) {
 const grid = document.getElementById("grid");
 const keyInput = document.getElementById("key");
 const keywordInput = document.getElementById("keyword");
+const inputs = document.getElementById("inputs");
 
 // Numeric keypad for key
 // Auto-uppercase keyword
