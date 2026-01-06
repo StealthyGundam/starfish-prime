@@ -26,7 +26,11 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    padding: 8px;
+    padding:
+      calc(8px + env(safe-area-inset-top))
+      calc(8px + env(safe-area-inset-right))
+      calc(8px + env(safe-area-inset-bottom))
+      calc(8px + env(safe-area-inset-left));
     gap: 2px;
   }
 
@@ -62,9 +66,14 @@
   .grid-wrapper {
     flex: 1;
     display: flex;
-    justify-content: center;   /* horizontal center */
-    align-items: flex-start;   /* move grid upward */
-    padding: 20px;
+    justify-content: center;
+    align-items: flex-start;
+
+    /* Dynamic vertical lift */
+    padding-top: clamp(8px, 6vh, 28px);
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
   }
 
   .grid {
@@ -73,14 +82,18 @@
     grid-template-rows: repeat(20, 1fr);
     aspect-ratio: 1 / 1;
     width: 100%;
-    max-width: min(100vw, 100vh);
+    max-width: min(92vw, 92vh);
   }
 
   .cell {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(10px, 2.2vw, 18px);
+
+    /* Tighter font */
+    font-size: clamp(9px, 1.9vw, 15px);
+    line-height: 1;
+
     color: orange;
   }
 
@@ -148,9 +161,7 @@ function modPow(base, exp, mod) {
 
 function decrypt() {
   let keyValue = 0n;
-  try {
-    keyValue = BigInt(keyInput.value);
-  } catch {}
+  try { keyValue = BigInt(keyInput.value); } catch {}
 
   const cipherAlphabet = buildCipherAlphabet(keywordInput.value);
   let solved = true;
