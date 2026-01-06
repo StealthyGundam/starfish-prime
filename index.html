@@ -90,11 +90,11 @@
     justify-content: center;
     font-size: clamp(9px, 1.9vw, 15px);
     line-height: 1;
-    color: orange;
+    color: white; /* Start unsolved as white */
   }
 
   .solved .cell {
-    color: yellow;
+    color: limegreen; /* grid turns green when solved */
   }
 </style>
 </head>
@@ -112,9 +112,11 @@
 </div>
 
 <script>
-const PRIME_KEY = 23n;
-const MOD = 29n;
+// Correct key and keyword (replace with your values)
+const CORRECT_KEY = "11";
+const CORRECT_KEYWORD = "SUNBLOCKER";
 
+// Base alphabet
 const BASE_ALPHABET = [
   ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   " ",
@@ -129,6 +131,7 @@ if (CIPHER_TEXT.length !== 400) {
   alert("Cipher text is not exactly 400 characters.\nLength: " + CIPHER_TEXT.length);
 }
 
+// Utility to remove repeated letters in keyword
 function uniqueKeyword(word) {
   const seen = new Set();
   return [...word.toUpperCase()].filter(c => {
@@ -138,71 +141,14 @@ function uniqueKeyword(word) {
   });
 }
 
+// Build cipher alphabet (not strictly needed for solution validation)
 function buildCipherAlphabet(keyword) {
   const keyChars = uniqueKeyword(keyword).filter(c => BASE_ALPHABET.includes(c));
   const remainder = BASE_ALPHABET.filter(c => !keyChars.includes(c));
   return [...keyChars, ...remainder];
 }
 
-function modPow(base, exp, mod) {
-  let result = 1n;
-  base %= mod;
-  while (exp > 0n) {
-    if (exp & 1n) result = (result * base) % mod;
-    exp >>= 1n;
-    base = (base * base) % mod;
-  }
-  return result;
-}
-
-function decrypt() {
-  // Prevent solved status if inputs are empty
-  if (!keyInput.value || !keywordInput.value) {
-    renderGrid([...CIPHER_TEXT], false);
-    keyInput.classList.remove("correct");
-    keywordInput.classList.remove("correct");
-    inputs.style.opacity = "1";
-    inputs.style.pointerEvents = "auto";
-    return;
-  }
-
-  let keyValue = 0n;
-  try { keyValue = BigInt(keyInput.value); } catch {}
-
-  const cipherAlphabet = buildCipherAlphabet(keywordInput.value);
-  let solved = true;
-  let output = [];
-
-  for (let char of CIPHER_TEXT) {
-    const index = cipherAlphabet.indexOf(char);
-    if (index === -1) {
-      solved = false;
-      output.push(char);
-      continue;
-    }
-
-    const decryptedIndex = Number(modPow(BigInt(index), keyValue, MOD));
-    if (decryptedIndex < 0 || decryptedIndex >= BASE_ALPHABET.length) {
-      solved = false;
-      output.push(char);
-    } else {
-      output.push(BASE_ALPHABET[decryptedIndex]);
-    }
-  }
-
-  renderGrid(output, solved);
-  keyInput.classList.toggle("correct", solved);
-  keywordInput.classList.toggle("correct", solved);
-
-  if (solved) {
-    inputs.style.opacity = "0";
-    inputs.style.pointerEvents = "none";
-  } else {
-    inputs.style.opacity = "1";
-    inputs.style.pointerEvents = "auto";
-  }
-}
-
+// Grid rendering
 function renderGrid(chars, solved) {
   grid.innerHTML = "";
   grid.classList.toggle("solved", solved);
@@ -215,12 +161,35 @@ function renderGrid(chars, solved) {
   }
 }
 
+// Check puzzle
+function decrypt() {
+  const keyCorrect = keyInput.value === CORRECT_KEY;
+  const keywordCorrect = keywordInput.value.toUpperCase() === CORRECT_KEYWORD;
+
+  // Show cipher text as white initially
+  renderGrid([...CIPHER_TEXT], false);
+  keyInput.classList.remove("correct");
+  keywordInput.classList.remove("correct");
+  inputs.style.opacity = "1";
+  inputs.style.pointerEvents = "auto";
+
+  if (keyCorrect && keywordCorrect) {
+    // Puzzle solved: grid turns green, inputs hidden
+    renderGrid([...CIPHER_TEXT], true);
+    keyInput.classList.add("correct");
+    keywordInput.classList.add("correct");
+    inputs.style.opacity = "0";
+    inputs.style.pointerEvents = "none";
+  }
+}
+
+// Elements
 const grid = document.getElementById("grid");
 const keyInput = document.getElementById("key");
 const keywordInput = document.getElementById("keyword");
 const inputs = document.getElementById("inputs");
 
-// Auto-uppercase keyword
+// Auto-uppercase keyword input
 keywordInput.addEventListener("input", () => {
   const cursorPos = keywordInput.selectionStart;
   keywordInput.value = keywordInput.value.toUpperCase();
@@ -228,9 +197,11 @@ keywordInput.addEventListener("input", () => {
   decrypt();
 });
 
+// Key input numeric keypad
 keyInput.addEventListener("input", decrypt);
 
-decrypt();
+// Initial render
+renderGrid([...CIPHER_TEXT], false);
 </script>
 </body>
 </html>
