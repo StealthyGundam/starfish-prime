@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Cipher Grid Puzzle</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    color: #fff;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: monospace;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .inputs {
+    display: flex;
+    gap: 8px;
+  }
+
+  input {
+    flex: 1;
+    padding: 8px;
+    font-size: 16px;
+    background: #fff;
+    color: #000;
+    border: 2px solid red;
+    outline: none;
+  }
+
+  input.correct {
+    border-color: green;
+  }
+
+  .grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    grid-template-rows: repeat(20, 1fr);
+    gap: 1px;
+  }
+
+  .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(min(3.8vw, 3.8vh));
+    color: orange;
+  }
+
+  .solved .cell {
+    color: white;
+  }
+</style>
+</head>
+
+<body>
+<div class="container">
+  <div class="inputs">
+    <input id="keyword" placeholder="Keyword" />
+    <input id="key" placeholder="Decryption Key" />
+  </div>
+
+  <div id="grid" class="grid"></div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+
+const PRIME_KEY = 23n;
+const MOD = 29n;
+
+const BASE_ALPHABET = [
+  ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  " ",
+  ",",
+  "."
+];
+
+// EXACTLY 400 characters required
+const CIPHER_TEXT =
+"XOHQAKLRHXBQHPAESNHE OFHELOHVSAOHQXEKAIOFDHGSLRQHIBMHBLH,XOHMEELABRX,.HQBIOHZKOQ,DHXOHMK,,OFOIDHNLECBLRH,XOHPB,JHCEKAIHLE,BPOHXBQHSUQOLPO.HOMV,JHQ,FOO,QHQBRXOIDHASMVHVEQ,QHQ,EEIHAELOAJ.H,XOHSAAOJQHCEKAIHMBQQHXBQHQSFPSQ,BPHQMBAODHXBQHIFSMS,BPHOTB,QDHXBQHQXSIECH,XS,HXSIHISLPOIH,XFEKRXHO OFJHLBRX,.HXOHCSQHRELOHGEFHLEC.";
+
+/* ================= SETUP ================= */
+
+if (CIPHER_TEXT.length !== 400) {
+  alert("Cipher text is not exactly 400 characters.");
+}
+
+const grid = document.getElementById("grid");
+const keywordInput = document.getElementById("keyword");
+const keyInput = document.getElementById("key");
+
+/* ================= UTIL ================= */
+
+function uniqueKeyword(word) {
+  const seen = new Set();
+  return [...word.toUpperCase()].filter(c => {
+    if (seen.has(c)) return false;
+    seen.add(c);
+    return true;
+  });
+}
+
+function buildCipherAlphabet(keyword) {
+  const keyChars = uniqueKeyword(keyword).filter(c => BASE_ALPHABET.includes(c));
+  const remainder = BASE_ALPHABET.filter(c => !keyChars.includes(c));
+  return [...keyChars, ...remainder];
+}
+
+function modPow(base, exp, mod) {
+  let result = 1n;
+  base %= mod;
+  while (exp > 0) {
+    if (exp & 1n) result = (result * base) % mod;
+    exp >>= 1n;
+    base = (base * base) % mod;
+  }
+  return result;
+}
+
+/* ================= DECRYPT ================= */
+
+function decrypt() {
+  const keyword = keywordInput.value;
+  const keyValue = BigInt(keyInput.value || 0);
+
+  const cipherAlphabet = buildCipherAlphabet(keyword);
+
+  let solved = true;
+  let output = [];
+
+  for (let char of CIPHER_TEXT) {
+    const index = cipherAlphabet.indexOf(char);
+    if (index === -1) {
+      solved = false;
+      output.push(char);
+      continue;
+    }
+
+    try {
+      const decryptedIndex = Number(
+        modPow(BigInt(index), keyValue, MOD)
+      );
+
+      if (decryptedIndex < 0 || decryptedIndex >= BASE_ALPHABET.length) {
+        solved = false;
+        output.push(char);
+      } else {
+        output.push(BASE_ALPHABET[decryptedIndex]);
+      }
+    } catch {
+      solved = false;
+      output.push(char);
+    }
+  }
+
+  renderGrid(output, solved);
+
+  keywordInput.classList.toggle("correct", solved);
+  keyInput.classList.toggle("correct", solved);
+}
+
+/* ================= RENDER ================= */
+
+function renderGrid(chars, solved) {
+  grid.innerHTML = "";
+  grid.classList.toggle("solved", solved);
+
+  for (let i = 0; i < 400; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.textContent = chars[i] || " ";
+    grid.appendChild(cell);
+  }
+}
+
+/* ================= INIT ================= */
+
+keywordInput.addEventListener("input", decrypt);
+keyInput.addEventListener("input", decrypt);
+
+decrypt();
+</script>
+</body>
+</html>
