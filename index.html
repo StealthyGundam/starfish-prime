@@ -156,6 +156,16 @@ function modPow(base, exp, mod) {
 }
 
 function decrypt() {
+  // Prevent solved status if inputs are empty
+  if (!keyInput.value || !keywordInput.value) {
+    renderGrid([...CIPHER_TEXT], false);
+    keyInput.classList.remove("correct");
+    keywordInput.classList.remove("correct");
+    inputs.style.opacity = "1";
+    inputs.style.pointerEvents = "auto";
+    return;
+  }
+
   let keyValue = 0n;
   try { keyValue = BigInt(keyInput.value); } catch {}
 
@@ -184,7 +194,6 @@ function decrypt() {
   keyInput.classList.toggle("correct", solved);
   keywordInput.classList.toggle("correct", solved);
 
-  // Hide input boxes after solved
   if (solved) {
     inputs.style.opacity = "0";
     inputs.style.pointerEvents = "none";
@@ -211,7 +220,6 @@ const keyInput = document.getElementById("key");
 const keywordInput = document.getElementById("keyword");
 const inputs = document.getElementById("inputs");
 
-// Numeric keypad for key
 // Auto-uppercase keyword
 keywordInput.addEventListener("input", () => {
   const cursorPos = keywordInput.selectionStart;
