@@ -27,13 +27,13 @@
     flex-direction: column;
     height: 100vh;
     padding: 8px;
-    gap: 4px; /* reduced gap */
+    gap: 2px;
   }
 
   .inputs {
     display: flex;
     width: 100%;
-    gap: 6px; /* small gap between inputs */
+    gap: 6px;
   }
 
   input {
@@ -50,20 +50,20 @@
   }
 
   #key {
-    width: 25%;
+    width: 40%;
     text-align: left;
   }
 
   #keyword {
-    width: 75%;
-    text-align: right;
+    width: 60%;
+    text-align: left;
   }
 
   .grid-wrapper {
     flex: 1;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center;   /* horizontal center */
+    align-items: flex-start;   /* move grid upward */
     padding: 20px;
   }
 
@@ -103,8 +103,6 @@
 </div>
 
 <script>
-/* ================= CONFIG ================= */
-
 const PRIME_KEY = 23n;
 const MOD = 29n;
 
@@ -118,13 +116,9 @@ const BASE_ALPHABET = [
 const CIPHER_TEXT =
 "XOHQAKLRHXBQHPAESNHE OFHELOHQXEKAIOFHGSLRQHIBMHBLH,XOHMEELABRX,.HSHVSASIBLH SMVBFOHXOHCSANOIHCB,XHES,XHSLIHXKLROFHUSASLPOIHUJHGSB,X.H,XOHPB,JHNLOCHXBQH BRBAHSLIHGOA,HQSGOFHS,HLBRX,.HOMV,JHQ,FOO,QHQBRXOIHSQHXOHIOVSF,OIH,EHQOF OHSHZKBO,HPSAAHEGHIK,J.HSAAOJQHFOMOMUOFOIHXBQHQMBAOHXBQHMOFPJHXBQHQ,OOAHFOQEA O.HGEFHLECHXOHCSQHRELOHUK,HXBQHVFEMBQOHFOMSBLOI.H,XOHMEELHCB,LOQQHSLIHUAOQQOIHXBQHFBRX,OEKQHVS,X.";
 
-/* ================= VALIDATION ================= */
-
 if (CIPHER_TEXT.length !== 400) {
   alert("Cipher text is not exactly 400 characters.\nLength: " + CIPHER_TEXT.length);
 }
-
-/* ================= UTIL ================= */
 
 function uniqueKeyword(word) {
   const seen = new Set();
@@ -152,19 +146,13 @@ function modPow(base, exp, mod) {
   return result;
 }
 
-/* ================= DECRYPT ================= */
-
 function decrypt() {
-  const keyword = keywordInput.value;
   let keyValue = 0n;
-
   try {
     keyValue = BigInt(keyInput.value);
-  } catch {
-    keyValue = 0n;
-  }
+  } catch {}
 
-  const cipherAlphabet = buildCipherAlphabet(keyword);
+  const cipherAlphabet = buildCipherAlphabet(keywordInput.value);
   let solved = true;
   let output = [];
 
@@ -176,10 +164,7 @@ function decrypt() {
       continue;
     }
 
-    const decryptedIndex = Number(
-      modPow(BigInt(index), keyValue, MOD)
-    );
-
+    const decryptedIndex = Number(modPow(BigInt(index), keyValue, MOD));
     if (decryptedIndex < 0 || decryptedIndex >= BASE_ALPHABET.length) {
       solved = false;
       output.push(char);
@@ -189,11 +174,9 @@ function decrypt() {
   }
 
   renderGrid(output, solved);
-  keywordInput.classList.toggle("correct", solved);
   keyInput.classList.toggle("correct", solved);
+  keywordInput.classList.toggle("correct", solved);
 }
-
-/* ================= RENDER ================= */
 
 function renderGrid(chars, solved) {
   grid.innerHTML = "";
@@ -207,14 +190,12 @@ function renderGrid(chars, solved) {
   }
 }
 
-/* ================= INIT ================= */
-
 const grid = document.getElementById("grid");
-const keywordInput = document.getElementById("keyword");
 const keyInput = document.getElementById("key");
+const keywordInput = document.getElementById("keyword");
 
-keywordInput.addEventListener("input", decrypt);
 keyInput.addEventListener("input", decrypt);
+keywordInput.addEventListener("input", decrypt);
 
 decrypt();
 </script>
