@@ -26,13 +26,13 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    padding: 8px;
-    gap: 8px;
+    padding: 10px;
+    gap: 10px;
   }
 
   .inputs {
     display: flex;
-    gap: 8px;
+    gap: 10px;
   }
 
   input {
@@ -49,19 +49,28 @@
     border-color: green;
   }
 
-  .grid {
+  .grid-wrapper {
     flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .grid {
     display: grid;
     grid-template-columns: repeat(20, 1fr);
     grid-template-rows: repeat(20, 1fr);
-    gap: 1px;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    max-width: min(100vw, 100vh);
   }
 
   .cell {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: calc(min(3.8vw, 3.8vh));
+    font-size: clamp(10px, 2.2vw, 18px);
     color: orange;
   }
 
@@ -74,11 +83,13 @@
 <body>
 <div class="container">
   <div class="inputs">
-    <input id="keyword" placeholder="Keyword" />
     <input id="key" placeholder="Decryption Key" />
+    <input id="keyword" placeholder="Keyword" />
   </div>
 
-  <div id="grid" class="grid"></div>
+  <div class="grid-wrapper">
+    <div id="grid" class="grid"></div>
+  </div>
 </div>
 
 <script>
@@ -94,19 +105,14 @@ const BASE_ALPHABET = [
   "."
 ];
 
-// EXACTLY 400 characters required
 const CIPHER_TEXT =
 "XOHQAKLRHXBQHPAESNHE OFHELOHQXEKAIOFHGSLRQHIBMHBLH,XOHMEELABRX,.HSHVSASIBLH SMVBFOHXOHCSANOIHCB,XHES,XHSLIHXKLROFHUSASLPOIHUJHGSB,X.H,XOHPB,JHNLOCHXBQH BRBAHSLIHGOA,HQSGOFHS,HLBRX,.HOMV,JHQ,FOO,QHQBRXOIHSQHXOHIOVSF,OIH,EHQOF OHSHZKBO,HPSAAHEGHIK,J.HSAAOJQHFOMOMUOFOIHXBQHQMBAOHXBQHMOFPJHXBQHQ,OOAHFOQEA O.HGEFHLECHXOHCSQHRELOHUK,HXBQHVFEMBQOHFOMSBLOI.H,XOHMEELHCB,LOQQHSLIHUAOQQOIHXBQHFBRX,OEKQHVS,X.";
 
-/* ================= SETUP ================= */
+/* ================= VALIDATION ================= */
 
 if (CIPHER_TEXT.length !== 400) {
-  alert("Cipher text is not exactly 400 characters.");
+  alert("Cipher text is not exactly 400 characters.\nLength: " + CIPHER_TEXT.length);
 }
-
-const grid = document.getElementById("grid");
-const keywordInput = document.getElementById("keyword");
-const keyInput = document.getElementById("key");
 
 /* ================= UTIL ================= */
 
@@ -128,7 +134,7 @@ function buildCipherAlphabet(keyword) {
 function modPow(base, exp, mod) {
   let result = 1n;
   base %= mod;
-  while (exp > 0) {
+  while (exp > 0n) {
     if (exp & 1n) result = (result * base) % mod;
     exp >>= 1n;
     base = (base * base) % mod;
@@ -140,10 +146,15 @@ function modPow(base, exp, mod) {
 
 function decrypt() {
   const keyword = keywordInput.value;
-  const keyValue = BigInt(keyInput.value || 0);
+  let keyValue = 0n;
+
+  try {
+    keyValue = BigInt(keyInput.value);
+  } catch {
+    keyValue = 0n;
+  }
 
   const cipherAlphabet = buildCipherAlphabet(keyword);
-
   let solved = true;
   let output = [];
 
@@ -155,25 +166,19 @@ function decrypt() {
       continue;
     }
 
-    try {
-      const decryptedIndex = Number(
-        modPow(BigInt(index), keyValue, MOD)
-      );
+    const decryptedIndex = Number(
+      modPow(BigInt(index), keyValue, MOD)
+    );
 
-      if (decryptedIndex < 0 || decryptedIndex >= BASE_ALPHABET.length) {
-        solved = false;
-        output.push(char);
-      } else {
-        output.push(BASE_ALPHABET[decryptedIndex]);
-      }
-    } catch {
+    if (decryptedIndex < 0 || decryptedIndex >= BASE_ALPHABET.length) {
       solved = false;
       output.push(char);
+    } else {
+      output.push(BASE_ALPHABET[decryptedIndex]);
     }
   }
 
   renderGrid(output, solved);
-
   keywordInput.classList.toggle("correct", solved);
   keyInput.classList.toggle("correct", solved);
 }
@@ -193,6 +198,10 @@ function renderGrid(chars, solved) {
 }
 
 /* ================= INIT ================= */
+
+const grid = document.getElementById("grid");
+const keywordInput = document.getElementById("keyword");
+const keyInput = document.getElementById("key");
 
 keywordInput.addEventListener("input", decrypt);
 keyInput.addEventListener("input", decrypt);
