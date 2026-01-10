@@ -37,6 +37,7 @@ html, body {
 
 @keyframes flicker { 0%,19%,21%,23%,25%,54%,56%,100%{opacity:1;} 20%,22%,24%,55%{opacity:0.5;} }
 @keyframes pulseGlow {0%{opacity:0.03;}50%{opacity:0.08;}100%{opacity:0.03;}}
+.input-placeholder { border-bottom:1px dashed #0f0; cursor:text; display:inline-block; padding:0 2px; color:#0f0; }
 </style>
 </head>
 <body>
@@ -122,37 +123,45 @@ async function typeBootLine(line){
   });
 }
 
-// Enable inline editable lines (single contenteditable span)
+// Enable editable placeholders when clicked
 function enableTypingPlaceholders(){
   const lines = terminal.querySelectorAll('.terminal-line');
   lines.forEach(line=>{
     if(line.textContent.includes('Enter Decryption Key: ■')) {
-      line.innerHTML = line.textContent.replace(/■+/,''); // remove placeholders
-      const editable = document.createElement('span');
-      editable.id='key-line';
-      editable.contentEditable='true';
-      editable.style.outline='none';
-      editable.style.borderBottom='1px solid #0f0';
-      editable.style.color='#0f0';
-      editable.style.background='transparent';
-      editable.textContent='';
-      line.appendChild(editable);
-      editable.addEventListener('input', update);
+      const parts = line.textContent.split('■');
+      line.textContent = parts[0];
+      const placeholder = document.createElement('span');
+      placeholder.id='key-line';
+      placeholder.className='input-placeholder';
+      placeholder.textContent='■■■';
+      line.appendChild(placeholder);
+
+      placeholder.addEventListener('click', () => {
+        placeholder.contentEditable='true';
+        placeholder.focus();
+        placeholder.textContent=''; // remove placeholders on first click
+      });
+      placeholder.addEventListener('input', update);
     }
     if(line.textContent.includes('Enter Keyword: ■')) {
-      line.innerHTML = line.textContent.replace(/■+/,''); // remove placeholders
-      const editable = document.createElement('span');
-      editable.id='keyword-line';
-      editable.contentEditable='true';
-      editable.style.outline='none';
-      editable.style.borderBottom='1px solid #0f0';
-      editable.style.color='#0f0';
-      editable.style.background='transparent';
-      editable.textContent='';
-      line.appendChild(editable);
-      editable.addEventListener('input', update);
+      const parts = line.textContent.split('■');
+      line.textContent = parts[0];
+      const placeholder = document.createElement('span');
+      placeholder.id='keyword-line';
+      placeholder.className='input-placeholder';
+      placeholder.textContent='■■■■■■■■■■';
+      line.appendChild(placeholder);
+
+      placeholder.addEventListener('click', () => {
+        placeholder.contentEditable='true';
+        placeholder.focus();
+        placeholder.textContent=''; // remove placeholders on first click
+      });
+      placeholder.addEventListener('input', update);
     }
   });
+
+  // Show grid after boot
   document.querySelector(".grid-wrapper").style.opacity="1";
 }
 
