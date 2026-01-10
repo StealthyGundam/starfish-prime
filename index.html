@@ -64,9 +64,8 @@ const cells=[];
 for(let i=0;i<400;i++){let c=document.createElement("div");c.className="cell";c.textContent=" ";grid.appendChild(c);cells.push(c);}
 
 // Render grid
-function renderGrid(chars,solved){
-  grid.classList.toggle("solved",solved);
-  for(let i=0;i<400;i++) cells[i].textContent=chars[i]||" ";
+function renderGrid(chars){
+  for(let i=0;i<400;i++) cells[i].textContent=chars[i]||' ';
 }
 
 // Update function
@@ -79,7 +78,6 @@ function update(){
   const kwVal = Array.from(keywordLine.querySelectorAll('.input-char')).map(s=>s.textContent||'').join('');
 
   const keyV = keyVal ? BigInt(keyVal) : 0n;
-
   const kw = kwVal.toUpperCase().split("").filter(c=>BASE_ALPHABET.includes(c));
   const seen = new Set();
   const keyChars = kw.filter(c=>{ if(seen.has(c)) return false; seen.add(c); return true; });
@@ -94,7 +92,7 @@ function update(){
     output.push(BASE_ALPHABET[decIdx] || char);
   }
 
-  renderGrid(output,false);
+  renderGrid(output);
 }
 
 // Boot sequence text
@@ -137,7 +135,9 @@ function enableTypingPlaceholders(){
       line.id='key-line';
       line.querySelectorAll('.input-char').forEach(span=>{
         span.addEventListener('input', update);
-        span.addEventListener('keydown', (e)=>{ if(e.key.length===1) e.preventDefault(); }); // one char per ■
+        span.addEventListener('keydown', e=>{
+          if(e.key.length===1 && e.target.textContent.length>0) e.preventDefault();
+        });
       });
     }
     if(line.textContent.includes('Enter Keyword: ■')) {
@@ -147,7 +147,9 @@ function enableTypingPlaceholders(){
       line.id='keyword-line';
       line.querySelectorAll('.input-char').forEach(span=>{
         span.addEventListener('input', update);
-        span.addEventListener('keydown', (e)=>{ if(e.key.length===1) e.preventDefault(); });
+        span.addEventListener('keydown', e=>{
+          if(e.key.length===1 && e.target.textContent.length>0) e.preventDefault();
+        });
       });
     }
   });
