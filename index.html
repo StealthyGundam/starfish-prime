@@ -26,7 +26,6 @@ html, body {
   overflow:auto;
   background:#001100;
   box-shadow:0 0 20px #0f0 inset;
-  opacity:0; transition:opacity 0.5s;
   white-space:pre-wrap;
 }
 .header { font-weight:bold; text-align:center; margin-bottom:5px; }
@@ -137,33 +136,25 @@ async function typeBootLine(line){
 // Run boot
 async function runBoot(){
   for(const line of bootLines) await typeBootLine(line);
-  // After boot, show input boxes and grid
-  terminal.style.opacity="1";
-  grid.parentElement.style.opacity="1";
 
-  // Insert actual inputs into terminal
-  terminal.innerHTML=`<div class="header">ROBOCO INDUSTRIES UNIFIED OPERATING SYSTEM</div>
-<div class="header">COPYRIGHT 2075-2077 ROBCO INDUSTRIES</div>
-<div class="divider"></div>
-<div>-RobCo Trespasser Management System-</div>
-<div class="divider"></div>
-<div class="prompt">| User Log:</div>
-<div class="input-line">
+  // Append input lines instead of replacing terminal
+  const inputHTML=`<div class="input-line">
   <span class="label">| >> Enter Decryption Key:</span>
   <input id="key" placeholder="XX" inputmode="numeric" pattern="\\d*" autocomplete="off">
 </div>
 <div class="input-line">
   <span class="label">| >> Enter Keyword:</span>
   <input id="keyword" placeholder="XXXXX" autocomplete="off">
-</div>
-<div class="divider"></div>
-<div class="prompt">&gt; run:// search -locked terminal</div>
-<div class="prompt">&gt; LOG: Please enter correct decryption key and keyword for access...</div>`;
+</div>`;
+  terminal.insertAdjacentHTML('beforeend', inputHTML);
 
-  // Add listeners after inputs exist
   document.getElementById("key").addEventListener("input",update);
   const kw=document.getElementById("keyword");
   kw.addEventListener("input",()=>{kw.value=kw.value.toUpperCase();update();});
+
+  document.querySelectorAll(".input-line").forEach(el=>el.style.opacity="1");
+  document.querySelector(".grid-wrapper").style.opacity="1";
+
   update();
 }
 
