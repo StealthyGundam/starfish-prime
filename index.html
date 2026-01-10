@@ -22,6 +22,7 @@ html, body {
   text-shadow:0 0 2px #0f0,0 0 4px #0f0;
   white-space:pre-wrap;
   animation: flicker 2s infinite alternate;
+  cursor:default;
 }
 
 /* Grid wrapper */
@@ -33,10 +34,8 @@ html, body {
 .grid { display:grid; grid-template-columns:repeat(20,1fr); grid-template-rows:repeat(20,1fr); width:100%; max-width:90vmin; aspect-ratio:1/1; z-index:3; position:relative; }
 .cell { display:flex; align-items:center; justify-content:center; font-size:clamp(10px,2vw,18px); line-height:1; color:#0f0; text-shadow:0 0 2px #0f0,0 0 4px #0f0; animation: flicker 2s infinite alternate; }
 .solved .cell { color:#0ff; text-shadow:0 0 6px #0ff,0 0 12px #0ff; }
-.cell.glitch { animation: glitchFlicker 0.2s infinite; }
 
 @keyframes flicker { 0%,19%,21%,23%,25%,54%,56%,100%{opacity:1;} 20%,22%,24%,55%{opacity:0.5;} }
-@keyframes glitchFlicker {0%,50%,100%{opacity:1;} 25%,75%{opacity:0;}}
 @keyframes pulseGlow {0%{opacity:0.03;}50%{opacity:0.08;}100%{opacity:0.03;}}
 </style>
 </head>
@@ -68,14 +67,13 @@ function renderGrid(chars){
   for(let i=0;i<400;i++) cells[i].textContent=chars[i]||' ';
 }
 
-// Update function
+// Update grid based on typed input
 function update(){
-  const keyLine=document.getElementById("key-line");
-  const keywordLine=document.getElementById("keyword-line");
-  if(!keyLine || !keywordLine) return;
-
-  const keyVal = Array.from(keyLine.querySelectorAll('.input-char')).map(s=>s.textContent||'0').join('');
-  const kwVal = Array.from(keywordLine.querySelectorAll('.input-char')).map(s=>s.textContent||'').join('');
+  const keyEl=document.getElementById("key-line");
+  const kwEl=document.getElementById("keyword-line");
+  if(!keyEl || !kwEl) return;
+  const keyVal = keyEl.textContent.trim() || '0';
+  const kwVal = kwEl.textContent.trim() || '';
 
   const keyV = keyVal ? BigInt(keyVal) : 0n;
   const kw = kwVal.toUpperCase().split("").filter(c=>BASE_ALPHABET.includes(c));
@@ -95,7 +93,7 @@ function update(){
   renderGrid(output);
 }
 
-// Boot sequence text
+// Boot sequence
 const bootLines=[
   "ROBOCO INDUSTRIES UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
@@ -124,33 +122,35 @@ async function typeBootLine(line){
   });
 }
 
-// Enable inline typing placeholders
+// Enable inline editable lines (single contenteditable span)
 function enableTypingPlaceholders(){
   const lines = terminal.querySelectorAll('.terminal-line');
   lines.forEach(line=>{
     if(line.textContent.includes('Enter Decryption Key: ■')) {
-      const text = line.textContent;
-      const parts = text.split('■');
-      line.innerHTML = parts.map((p,i)=> i===0?p:`<span class="input-char" contenteditable="true"></span>`).join('');
-      line.id='key-line';
-      line.querySelectorAll('.input-char').forEach(span=>{
-        span.addEventListener('input', update);
-        span.addEventListener('keydown', e=>{
-          if(e.key.length===1 && e.target.textContent.length>0) e.preventDefault();
-        });
-      });
+      line.innerHTML = line.textContent.replace(/■+/,''); // remove placeholders
+      const editable = document.createElement('span');
+      editable.id='key-line';
+      editable.contentEditable='true';
+      editable.style.outline='none';
+      editable.style.borderBottom='1px solid #0f0';
+      editable.style.color='#0f0';
+      editable.style.background='transparent';
+      editable.textContent='';
+      line.appendChild(editable);
+      editable.addEventListener('input', update);
     }
     if(line.textContent.includes('Enter Keyword: ■')) {
-      const text = line.textContent;
-      const parts = text.split('■');
-      line.innerHTML = parts.map((p,i)=> i===0?p:`<span class="input-char" contenteditable="true"></span>`).join('');
-      line.id='keyword-line';
-      line.querySelectorAll('.input-char').forEach(span=>{
-        span.addEventListener('input', update);
-        span.addEventListener('keydown', e=>{
-          if(e.key.length===1 && e.target.textContent.length>0) e.preventDefault();
-        });
-      });
+      line.innerHTML = line.textContent.replace(/■+/,''); // remove placeholders
+      const editable = document.createElement('span');
+      editable.id='keyword-line';
+      editable.contentEditable='true';
+      editable.style.outline='none';
+      editable.style.borderBottom='1px solid #0f0';
+      editable.style.color='#0f0';
+      editable.style.background='transparent';
+      editable.textContent='';
+      line.appendChild(editable);
+      editable.addEventListener('input', update);
     }
   });
   document.querySelector(".grid-wrapper").style.opacity="1";
