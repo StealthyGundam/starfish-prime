@@ -22,6 +22,9 @@ html, body {
   white-space:pre-wrap;
   animation: flicker 2s infinite alternate;
 }
+.terminal-line.glitch {
+  animation: glitchFlicker 0.2s infinite;
+}
 
 /* Input lines */
 .input-line { display:flex; align-items:center; margin:0; } /* no extra margin for single line spacing */
@@ -115,7 +118,7 @@ function randomGlitch(){
 }
 setInterval(randomGlitch,100);
 
-// Boot lines with placeholders for user key/keyword
+// Boot lines with placeholders
 const bootLines=[
   "ROBOCO INDUSTRIES UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
@@ -143,29 +146,28 @@ async function typeBootLine(line){
   });
 }
 
-// Run boot sequence
-async function runBoot(){
-  // Type all lines
-  for(const line of bootLines) await typeBootLine(line);
-
-  // After boot completes, insert real input fields in same place as placeholders
-  const inputHTML=`<div class="input-line">
-  <span class="label">| >> Enter Decryption Key:</span>
-  <input id="key" placeholder="XX" inputmode="numeric" pattern="\\d*" autocomplete="off">
-</div>
-<div class="input-line">
-  <span class="label">| >> Enter Keyword:</span>
-  <input id="keyword" placeholder="XXXXX" autocomplete="off">
-</div>`;
-  terminal.insertAdjacentHTML('beforeend', inputHTML);
-
-  document.getElementById("key").addEventListener("input",update);
-  const kw=document.getElementById("keyword");
-  kw.addEventListener("input",()=>{ kw.value=kw.value.toUpperCase(); update(); });
-
+// Replace typed placeholders with actual input fields in-place
+function replaceBootPlaceholders() {
+  const lines = terminal.querySelectorAll('.terminal-line');
+  lines.forEach(line => {
+    if(line.textContent.includes('| >> Enter Decryption Key:')) {
+      line.innerHTML = `<span class="label">| >> Enter Decryption Key:</span><input id="key" placeholder="XX" inputmode="numeric" pattern="\\d*" autocomplete="off">`;
+      document.getElementById("key").addEventListener("input",update);
+    }
+    if(line.textContent.includes('| >> Enter Keyword:')) {
+      line.innerHTML = `<span class="label">| >> Enter Keyword:</span><input id="keyword" placeholder="XXXXX" autocomplete="off">`;
+      const kw=document.getElementById("keyword");
+      kw.addEventListener("input",()=>{ kw.value=kw.value.toUpperCase(); update(); });
+    }
+  });
   document.querySelector(".grid-wrapper").style.opacity="1";
-
   update();
+}
+
+// Run boot
+async function runBoot(){
+  for(const line of bootLines) await typeBootLine(line);
+  replaceBootPlaceholders(); // convert placeholders to inputs
 }
 
 runBoot();
