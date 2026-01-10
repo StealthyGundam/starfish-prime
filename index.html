@@ -37,7 +37,7 @@ html, body {
 
 @keyframes flicker { 0%,19%,21%,23%,25%,54%,56%,100%{opacity:1;} 20%,22%,24%,55%{opacity:0.5;} }
 @keyframes pulseGlow {0%{opacity:0.03;}50%{opacity:0.08;}100%{opacity:0.03;}}
-.input-placeholder { border-bottom:1px dashed #0f0; cursor:text; display:inline-block; padding:0 2px; color:#0f0; }
+.input-placeholder { border-bottom:1px dashed #0f0; display:inline-block; padding:0 2px; color:#0f0; }
 </style>
 </head>
 <body>
@@ -53,8 +53,6 @@ html, body {
 const PRIME_KEY=23n, MOD=29n;
 const BASE_ALPHABET=[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ ,."];
 const CIPHER_TEXT="TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN I,G.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
-const CORRECT_KEYWORD="SUNBLOCKER";
-const CORRECT_KEY=(function(){let a=23n,m=28n,t,q,x0=0n,x1=1n;while(a>1n){q=a/m;t=m;m=a%m;a=t;t=x0;x0=x1-q*x0;x1=t;}if(x1<0n)x1+=m;return x1;})();
 
 const terminal=document.getElementById("terminal");
 const grid=document.getElementById("grid");
@@ -111,7 +109,7 @@ const bootLines=[
   "> LOG: Please enter correct decryption key and keyword for access..."
 ];
 
-// Type boot line by line (FAST)
+// Type boot line by line
 async function typeBootLine(line){
   return new Promise(res=>{
     const span=document.createElement("span");
@@ -126,7 +124,7 @@ async function typeBootLine(line){
   });
 }
 
-// Enable editable placeholders when clicked
+// Enable editable placeholders AND auto-fill default values
 function enableTypingPlaceholders(){
   const lines = terminal.querySelectorAll('.terminal-line');
   lines.forEach(line=>{
@@ -136,14 +134,9 @@ function enableTypingPlaceholders(){
       const placeholder = document.createElement('span');
       placeholder.id='key-line';
       placeholder.className='input-placeholder';
-      placeholder.textContent='■■■';
+      placeholder.textContent='45'; // <-- default decryption key
       line.appendChild(placeholder);
-
-      placeholder.addEventListener('click', () => {
-        placeholder.contentEditable='true';
-        placeholder.focus();
-        placeholder.textContent=''; // remove placeholders on first click
-      });
+      placeholder.contentEditable='true'; // already editable
       placeholder.addEventListener('input', update);
     }
     if(line.textContent.includes('Enter Keyword: ■')) {
@@ -152,20 +145,18 @@ function enableTypingPlaceholders(){
       const placeholder = document.createElement('span');
       placeholder.id='keyword-line';
       placeholder.className='input-placeholder';
-      placeholder.textContent='■■■■■■■■■■';
+      placeholder.textContent='BAMBOOZLE SWIPE'; // <-- default keyword
       line.appendChild(placeholder);
-
-      placeholder.addEventListener('click', () => {
-        placeholder.contentEditable='true';
-        placeholder.focus();
-        placeholder.textContent=''; // remove placeholders on first click
-      });
+      placeholder.contentEditable='true'; // already editable
       placeholder.addEventListener('input', update);
     }
   });
 
   // Show grid after boot
   document.querySelector(".grid-wrapper").style.opacity="1";
+
+  // Immediately update grid with default values
+  update();
 }
 
 // Run boot
