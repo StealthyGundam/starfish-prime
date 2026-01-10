@@ -11,7 +11,7 @@ html, body {
   font-family:'Courier New', monospace;
   background:#010; color:#0f0;
   overflow-y:auto; overflow-x:hidden;
-  line-height:1.4;
+  line-height:1.2; /* single line spacing */
 }
 
 /* CRT text glow/flicker */
@@ -24,14 +24,6 @@ html, body {
 }
 .terminal-line.glitch {
   animation: glitchFlicker 0.2s infinite;
-}
-
-/* Input lines */
-.input-line { display:flex; align-items:center; margin:2px 0; }
-.input-line span.label { margin-right:5px; }
-.input-line input {
-  background:#010; color:#0f0; border:none; border-bottom:1px solid #0f0;
-  outline:none; font-family:'Courier New', monospace; font-size:16px; width:150px; text-transform:uppercase;
 }
 
 /* Grid wrapper */
@@ -120,13 +112,18 @@ function randomGlitch(){
 }
 setInterval(randomGlitch,100);
 
-// Boot lines
+// Boot lines (include decryption key and keyword as part of boot)
 const bootLines=[
   "ROBOCO INDUSTRIES UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
   "-RobCo Trespasser Management System-",
   "==========================",
-  "| User Log:"
+  "| User Log:",
+  "| >> Enter Decryption Key: XX",
+  "| >> Enter Keyword: XXXXX",
+  "==========================",
+  "> run:// search -locked terminal",
+  "> LOG: Please enter correct decryption key and keyword for access..."
 ];
 
 async function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
@@ -148,7 +145,7 @@ async function typeBootLine(line){
 async function runBoot(){
   for(const line of bootLines) await typeBootLine(line);
 
-  // Append interactive input lines (override placeholders)
+  // Add interactive inputs inline (same formatting as boot)
   const inputHTML=`<div class="input-line">
   <span class="label">| >> Enter Decryption Key:</span>
   <input id="key" placeholder="XX" inputmode="numeric" pattern="\\d*" autocomplete="off">
@@ -156,9 +153,7 @@ async function runBoot(){
 <div class="input-line">
   <span class="label">| >> Enter Keyword:</span>
   <input id="keyword" placeholder="XXXXX" autocomplete="off">
-</div>
-<div class="terminal-line">&gt; run:// search -locked terminal</div>
-<div class="terminal-line">&gt; LOG: Please enter correct decryption key and keyword for access...</div>`;
+</div>`;
   terminal.insertAdjacentHTML('beforeend', inputHTML);
 
   document.getElementById("key").addEventListener("input",update);
