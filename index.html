@@ -1,207 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Cipher Grid Puzzle</title>
-<style>
-* { box-sizing: border-box; user-select: none; }
-html, body { margin:0; padding:0; background:#000; color:#fff; width:100%; height:100%; overflow:hidden; font-family:monospace; }
+html, body {
+  margin:0; padding:0;
+  width:100%; height:100%;
+  font-family: 'Courier New', monospace;
+  background:#010; /* dark terminal background */
+  color:#0f0; /* default green */
+  overflow:hidden;
+  position:relative;
+}
 
 .container {
   display:flex;
   flex-direction:column;
+  justify-content:flex-start;
   height:100vh;
-  padding:
-    calc(8px + env(safe-area-inset-top))
-    calc(8px + env(safe-area-inset-right))
-    calc(8px + env(safe-area-inset-bottom))
-    calc(8px + env(safe-area-inset-left));
-  gap:2px;
+  padding: 20px 40px;
+  gap:10px;
+  position:relative;
 }
 
 .inputs {
   display:flex;
   width:100%;
-  gap:6px;
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  gap:8px;
+  opacity:1;
+  transition: opacity 0.5s ease;
 }
-.inputs.hidden { opacity:0; transform: translateY(-10px); pointer-events:none; }
+.inputs.hidden { opacity:0; pointer-events:none; }
 
 input {
-  padding:8px;
+  background:#001100;
+  color:#0f0;
+  border:1px solid #0f0;
+  padding:6px 10px;
   font-size:16px;
-  background:#fff;
-  color:#000;
-  border:2px solid red;
   outline:none;
+  box-shadow:0 0 8px #0f0;
+  text-shadow:0 0 4px #0f0;
+  transition: box-shadow 0.3s, border-color 0.3s;
 }
-input.correct { border-color:green; }
+input.correct {
+  border-color:#0ff;
+  box-shadow:0 0 12px #0ff;
+}
 
-#key { width:40%; text-align:left; }
-#keyword { width:60%; text-align:left; }
-
+/* Grid wrapper */
 .grid-wrapper {
   flex:1;
   display:flex;
   justify-content:center;
   align-items:flex-start;
-  padding-top:clamp(8px,6vh,28px);
-  padding-left:20px;
-  padding-right:20px;
+  padding-top:10px;
+  padding-left:10px;
+  padding-right:10px;
   padding-bottom:20px;
+  position:relative;
 }
 
+/* CRT scanlines */
+.grid-wrapper::before {
+  content:"";
+  position:absolute;
+  top:0; left:0; width:100%; height:100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0) 0px,
+    rgba(0,0,0,0.1) 1px
+  );
+  pointer-events:none;
+}
+
+/* Grid */
 .grid {
   display:grid;
   grid-template-columns:repeat(20,1fr);
   grid-template-rows:repeat(20,1fr);
-  aspect-ratio:1/1;
   width:100%;
-  max-width:min(92vw,92vh);
+  max-width:90vmin;
+  aspect-ratio:1/1;
 }
 
+/* Cells */
 .cell {
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:clamp(9px,1.9vw,15px);
+  font-size:clamp(10px,2vw,18px);
   line-height:1;
-  color:white;
-}
-.solved .cell { color:limegreen; }
-</style>
-</head>
-<body>
-<div class="container">
-  <div id="inputs" class="inputs">
-    <input id="key" placeholder="Decryption Key" inputmode="numeric" pattern="\d*" autocomplete="off" />
-    <input id="keyword" placeholder="Keyword" autocomplete="off" />
-  </div>
-
-  <div class="grid-wrapper">
-    <div id="grid" class="grid"></div>
-  </div>
-</div>
-
-<script>
-// Encryption parameters
-const PRIME_KEY = 23n;
-const MOD = 29n;
-const BASE_ALPHABET = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", " ", ",", "."];
-const CIPHER_TEXT =
-"TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN I,G.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
-const CORRECT_KEYWORD = "SUNBLOCKER";
-
-// Warn if cipher length unexpected
-if(CIPHER_TEXT.length !== 400) console.warn(`Cipher text length is ${CIPHER_TEXT.length}, expected 400.`);
-
-// Modular inverse
-function modInverse(a, m) {
-  let m0 = m, t, q;
-  let x0 = 0n, x1 = 1n;
-  a = BigInt(a);
-  if (m === 1n) return 0n;
-
-  while (a > 1n) {
-    q = a / m;
-    t = m;
-    m = a % m;
-    a = t;
-    t = x0;
-    x0 = x1 - q * x0;
-    x1 = t;
-  }
-  if (x1 < 0n) x1 += m0;
-  return x1;
+  color:#0f0;
+  text-shadow:0 0 2px #0f0;
+  transition: color 0.3s, text-shadow 0.3s;
 }
 
-// Correct key
-const CORRECT_KEY = modInverse(PRIME_KEY, MOD-1n).toString();
-
-// Utilities
-const uniqueKeyword = word => [...new Set(word.toUpperCase())].filter(c => BASE_ALPHABET.includes(c));
-
-function buildCipherAlphabet(keyword){
-  const keyChars = uniqueKeyword(keyword);
-  const remainder = BASE_ALPHABET.filter(c => !keyChars.includes(c));
-  return [...keyChars, ...remainder];
+/* Solved cells brighter */
+.solved .cell {
+  color:#0ff;
+  text-shadow:0 0 6px #0ff,0 0 10px #0ff;
 }
 
-function modPow(base, exp, mod){
-  let result = 1n;
-  base %= mod;
-  while(exp > 0n){
-    if(exp & 1n) result = (result * base) % mod;
-    exp >>= 1n;
-    base = (base * base) % mod;
-  }
-  return result;
+/* Optional flicker animation for cells */
+@keyframes flicker {
+  0%,19%,21%,23%,25%,54%,56%,100% { opacity:1; }
+  20%,22%,24%,55% { opacity:0.5; }
 }
-
-// Elements
-const grid = document.getElementById("grid");
-const keyInput = document.getElementById("key");
-const keywordInput = document.getElementById("keyword");
-const inputs = document.getElementById("inputs");
-
-// Pre-create 400 cells for reuse
-const cells = [];
-for(let i=0;i<400;i++){
-  const cell = document.createElement("div");
-  cell.className = "cell";
-  cell.textContent = " ";
-  grid.appendChild(cell);
-  cells.push(cell);
-}
-
-function renderGrid(chars, solved){
-  grid.classList.toggle("solved", solved);
-  for(let i=0; i<400; i++){
-    cells[i].textContent = chars[i] || " ";
-  }
-}
-
-// Debounce updates
-let updateTimeout;
-function scheduleUpdate(){
-  clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(update, 50);
-}
-
-// Main update
-function update(){
-  const keyValue = keyInput.value ? BigInt(keyInput.value) : 0n;
-  const cipherAlphabet = buildCipherAlphabet(keywordInput.value);
-
-  const output = [];
-  for(const char of CIPHER_TEXT){
-    const idx = cipherAlphabet.indexOf(char);
-    if(idx === -1){ output.push(char); continue; }
-    const decIdx = Number(modPow(BigInt(idx), keyValue, MOD)) % BASE_ALPHABET.length;
-    output.push(BASE_ALPHABET[decIdx] || char);
-  }
-
-  const solved = keyInput.value === CORRECT_KEY &&
-                 keywordInput.value.toUpperCase() === CORRECT_KEYWORD;
-
-  renderGrid(output, solved);
-  keyInput.classList.toggle("correct", solved);
-  keywordInput.classList.toggle("correct", solved);
-  inputs.classList.toggle("hidden", solved);
-}
-
-// Event listeners
-keywordInput.addEventListener("input", () => {
-  const c = keywordInput.selectionStart;
-  keywordInput.value = keywordInput.value.toUpperCase();
-  keywordInput.setSelectionRange(c, c);
-  scheduleUpdate();
-});
-keyInput.addEventListener("input", scheduleUpdate);
-
-// Initial render
-update();
-</script>
-</body>
-</html>
+.cell { animation: flicker 2s infinite; }
