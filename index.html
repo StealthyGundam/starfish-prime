@@ -68,6 +68,9 @@ function renderGrid(chars){
   for(let i=0;i<400;i++) cells[i].textContent=chars[i]||' ';
 }
 
+// Render default empty grid immediately
+renderGrid(CIPHER_TEXT.split('').map(_=>' '));
+
 // Update grid based on typed input
 function update(){
   const keyEl=document.getElementById("key-line");
@@ -108,7 +111,7 @@ const bootLines=[
   "> LOG: Please enter correct decryption key and keyword for access..."
 ];
 
-// Type boot line by line
+// Type boot line by line (FAST)
 async function typeBootLine(line){
   return new Promise(res=>{
     const span=document.createElement("span");
@@ -119,7 +122,7 @@ async function typeBootLine(line){
       span.textContent += line[i];
       i++;
       if(i>=line.length){ clearInterval(interval); res(); }
-    },50);
+    },10); // FAST
   });
 }
 
