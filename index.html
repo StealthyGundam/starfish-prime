@@ -22,8 +22,13 @@ html, body {
   white-space:pre-wrap;
   animation: flicker 2s infinite alternate;
 }
-.terminal-line.glitch {
-  animation: glitchFlicker 0.2s infinite;
+
+/* Input lines */
+.input-line { display:flex; align-items:center; margin:0; } /* no extra margin for single line spacing */
+.input-line span.label { margin-right:5px; }
+.input-line input {
+  background:#010; color:#0f0; border:none; border-bottom:1px solid #0f0;
+  outline:none; font-family:'Courier New', monospace; font-size:16px; width:150px; text-transform:uppercase;
 }
 
 /* Grid wrapper */
@@ -79,14 +84,12 @@ function update(){
 
   const keyV = keyInput.value ? BigInt(keyInput.value) : 0n;
 
-  // Build cipher alphabet
   const kw = keywordInput.value.toUpperCase().split("").filter(c=>BASE_ALPHABET.includes(c));
   const seen = new Set();
   const keyChars = kw.filter(c=>{ if(seen.has(c)) return false; seen.add(c); return true; });
   const remainder = BASE_ALPHABET.filter(c=>!keyChars.includes(c));
   const cipherAlphabet = [...keyChars, ...remainder];
 
-  // Decrypt
   const output = [];
   for(const char of CIPHER_TEXT){
     const idx = cipherAlphabet.indexOf(char);
@@ -112,7 +115,7 @@ function randomGlitch(){
 }
 setInterval(randomGlitch,100);
 
-// Boot lines (include decryption key and keyword as part of boot)
+// Boot lines with placeholders for user key/keyword
 const bootLines=[
   "ROBOCO INDUSTRIES UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
@@ -126,26 +129,26 @@ const bootLines=[
   "> LOG: Please enter correct decryption key and keyword for access..."
 ];
 
-async function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 async function typeBootLine(line){
   return new Promise(res=>{
-    let i=0;
     const span=document.createElement("span");
     span.className="terminal-line";
     terminal.appendChild(span);
+    let i=0;
     const interval=setInterval(()=>{
-      span.textContent+=line[i];
+      span.textContent += line[i];
       i++;
-      if(i>=line.length){ clearInterval(interval); terminal.appendChild(document.createElement("br")); res(); }
+      if(i>=line.length){ clearInterval(interval); res(); }
     },50);
   });
 }
 
-// Run boot
+// Run boot sequence
 async function runBoot(){
+  // Type all lines
   for(const line of bootLines) await typeBootLine(line);
 
-  // Add interactive inputs inline (same formatting as boot)
+  // After boot completes, insert real input fields in same place as placeholders
   const inputHTML=`<div class="input-line">
   <span class="label">| >> Enter Decryption Key:</span>
   <input id="key" placeholder="XX" inputmode="numeric" pattern="\\d*" autocomplete="off">
@@ -158,7 +161,7 @@ async function runBoot(){
 
   document.getElementById("key").addEventListener("input",update);
   const kw=document.getElementById("keyword");
-  kw.addEventListener("input",()=>{ kw.value = kw.value.toUpperCase(); update(); });
+  kw.addEventListener("input",()=>{ kw.value=kw.value.toUpperCase(); update(); });
 
   document.querySelector(".grid-wrapper").style.opacity="1";
 
