@@ -3,17 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RobCo Terminal Cipher Grid - Free Text with Inputs</title>
+<title>RobCo Terminal Cipher Grid</title>
 <style>
 html, body {
-  margin:0; padding:0;
+  margin:0; padding:20px;
   width:100%; height:100%;
   font-family:'Courier New', monospace;
   background:#010; color:#0f0;
   overflow-y:auto; overflow-x:hidden;
   line-height:1.4;
 }
-body { padding:20px; }
 
 /* CRT text glow/flicker */
 .terminal-line {
@@ -36,7 +35,7 @@ body { padding:20px; }
 }
 
 /* Grid wrapper */
-.grid-wrapper { display:flex; justify-content:center; align-items:flex-start; padding:10px; position:relative; overflow:hidden; opacity:0; transition:opacity 0.5s; }
+.grid-wrapper { display:flex; justify-content:center; align-items:flex-start; padding:10px; position:relative; overflow:hidden; opacity:0; transition:opacity 0.5s; margin-top:20px; }
 .grid-wrapper::before { content:""; position:absolute; top:0; left:0; width:100%; height:100%; background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0.08) 1px); pointer-events:none; z-index:2; }
 .grid-wrapper::after { content:""; position:absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, rgba(0,255,0,0.05) 0%, transparent 80%); pointer-events:none; z-index:1; animation: pulseGlow 3s infinite alternate; }
 
@@ -75,37 +74,62 @@ const cells=[];
 for(let i=0;i<400;i++){let c=document.createElement("div");c.className="cell";c.textContent=" ";grid.appendChild(c);cells.push(c);}
 
 // Render grid
-function renderGrid(chars,solved){grid.classList.toggle("solved",solved);for(let i=0;i<400;i++)cells[i].textContent=chars[i]||" ";}
+function renderGrid(chars,solved){
+  grid.classList.toggle("solved",solved);
+  for(let i=0;i<400;i++) cells[i].textContent=chars[i]||" ";
+}
 
 // Update function
 function update(){
   const keyInput=document.getElementById("key");
   const keywordInput=document.getElementById("keyword");
   if(!keyInput || !keywordInput) return;
-  const keyV=keyInput.value?BigInt(keyInput.value):0n;
-  const cipherAlphabet=[...new Set(keywordInput.value.toUpperCase().split("").filter(c=>BASE_ALPHABET.includes(c)))].concat(BASE_ALPHABET.filter(c=>!keywordInput.value.toUpperCase().includes(c)));
-  const output=[];
-  for(const char of CIPHER_TEXT){const idx=cipherAlphabet.indexOf(char);if(idx===-1){output.push(char);continue;}output.push(BASE_ALPHABET[Number((BigInt(idx)**keyV)%MOD)%BASE_ALPHABET.length]||char);}
-  const solved=(keyInput.value===CORRECT_KEY && keywordInput.value.toUpperCase()===CORRECT_KEYWORD);
+
+  const keyV = keyInput.value ? BigInt(keyInput.value) : 0n;
+
+  // Build cipher alphabet
+  const kw = keywordInput.value.toUpperCase().split("").filter(c=>BASE_ALPHABET.includes(c));
+  const seen = new Set();
+  const keyChars = kw.filter(c=>{ if(seen.has(c)) return false; seen.add(c); return true; });
+  const remainder = BASE_ALPHABET.filter(c=>!keyChars.includes(c));
+  const cipherAlphabet = [...keyChars, ...remainder];
+
+  // Decrypt
+  const output = [];
+  for(const char of CIPHER_TEXT){
+    const idx = cipherAlphabet.indexOf(char);
+    if(idx===-1){ output.push(char); continue; }
+    const decIdx = Number((BigInt(idx) ** keyV) % MOD);
+    output.push(BASE_ALPHABET[decIdx] || char);
+  }
+
+  const solved = keyInput.value === CORRECT_KEY.toString() &&
+                 keywordInput.value.toUpperCase() === CORRECT_KEYWORD;
+
   renderGrid(output,solved);
 }
 
-// Glitch animation
-function randomGlitch(){const count=Math.floor(Math.random()*5)+1;for(let i=0;i<count;i++){const idx=Math.floor(Math.random()*cells.length);cells[idx].classList.add("glitch");setTimeout(()=>cells[idx].classList.remove("glitch"),Math.random()*200+100);}}
+// Random glitch
+function randomGlitch(){
+  const count=Math.floor(Math.random()*5)+1;
+  for(let i=0;i<count;i++){
+    const idx=Math.floor(Math.random()*cells.length);
+    cells[idx].classList.add("glitch");
+    setTimeout(()=>cells[idx].classList.remove("glitch"), Math.random()*200+100);
+  }
+}
 setInterval(randomGlitch,100);
 
 // Boot lines
-let bootLines=[
+const bootLines=[
   "ROBOCO INDUSTRIES UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
   "-RobCo Trespasser Management System-",
   "==========================",
   "| User Log:"
-  // The two input lines will be replaced by actual inputs
 ];
 
-// Typewriter effect
-async function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+async function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 async function typeBootLine(line){
   return new Promise(res=>{
     let i=0;
@@ -115,18 +139,16 @@ async function typeBootLine(line){
     const interval=setInterval(()=>{
       span.textContent+=line[i];
       i++;
-      if(Math.random()<0.05) span.textContent+=String.fromCharCode(32+Math.floor(Math.random()*94));
       if(i>=line.length){ clearInterval(interval); terminal.appendChild(document.createElement("br")); res(); }
     },50);
   });
 }
 
-// Run boot sequence
+// Run boot
 async function runBoot(){
-  // Type all boot lines except inputs
   for(const line of bootLines) await typeBootLine(line);
 
-  // Append actual input fields instead of static text
+  // Append interactive input lines (override placeholders)
   const inputHTML=`<div class="input-line">
   <span class="label">| >> Enter Decryption Key:</span>
   <input id="key" placeholder="XX" inputmode="numeric" pattern="\\d*" autocomplete="off">
@@ -139,10 +161,9 @@ async function runBoot(){
 <div class="terminal-line">&gt; LOG: Please enter correct decryption key and keyword for access...</div>`;
   terminal.insertAdjacentHTML('beforeend', inputHTML);
 
-  // Add listeners
   document.getElementById("key").addEventListener("input",update);
   const kw=document.getElementById("keyword");
-  kw.addEventListener("input",()=>{kw.value=kw.value.toUpperCase();update();});
+  kw.addEventListener("input",()=>{ kw.value = kw.value.toUpperCase(); update(); });
 
   document.querySelector(".grid-wrapper").style.opacity="1";
 
