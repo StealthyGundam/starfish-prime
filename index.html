@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RobCo Terminal Cipher Grid - Free Text</title>
+<title>RobCo Terminal Cipher Grid - Free Text with Inputs</title>
 <style>
 html, body {
   margin:0; padding:0;
@@ -95,22 +95,17 @@ function randomGlitch(){const count=Math.floor(Math.random()*5)+1;for(let i=0;i<
 setInterval(randomGlitch,100);
 
 // Boot lines
-const bootLines=[
+let bootLines=[
   "ROBOCO INDUSTRIES UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
   "-RobCo Trespasser Management System-",
   "==========================",
-  "| User Log:",
-  "| >> Enter Decryption Key: XX",
-  "| >> Enter Keyword: XXXXX",
-  "| ===========================",
-  "> run:// search -locked terminal",
-  "> LOG: Please enter correct decryption key and keyword for access..."
+  "| User Log:"
+  // The two input lines will be replaced by actual inputs
 ];
 
-async function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-
 // Typewriter effect
+async function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 async function typeBootLine(line){
   return new Promise(res=>{
     let i=0;
@@ -128,19 +123,23 @@ async function typeBootLine(line){
 
 // Run boot sequence
 async function runBoot(){
+  // Type all boot lines except inputs
   for(const line of bootLines) await typeBootLine(line);
 
-  // Append actual input lines inline
-  const inputWrapper=document.createElement("div");
-  inputWrapper.className="input-line";
-  inputWrapper.innerHTML=`<span class="label">| >> Enter Decryption Key:</span><input id="key" placeholder="XX" inputmode="numeric" pattern="\\d*" autocomplete="off">`;
-  terminal.appendChild(inputWrapper);
+  // Append actual input fields instead of static text
+  const inputHTML=`<div class="input-line">
+  <span class="label">| >> Enter Decryption Key:</span>
+  <input id="key" placeholder="XX" inputmode="numeric" pattern="\\d*" autocomplete="off">
+</div>
+<div class="input-line">
+  <span class="label">| >> Enter Keyword:</span>
+  <input id="keyword" placeholder="XXXXX" autocomplete="off">
+</div>
+<div class="terminal-line">&gt; run:// search -locked terminal</div>
+<div class="terminal-line">&gt; LOG: Please enter correct decryption key and keyword for access...</div>`;
+  terminal.insertAdjacentHTML('beforeend', inputHTML);
 
-  const kwWrapper=document.createElement("div");
-  kwWrapper.className="input-line";
-  kwWrapper.innerHTML=`<span class="label">| >> Enter Keyword:</span><input id="keyword" placeholder="XXXXX" autocomplete="off">`;
-  terminal.appendChild(kwWrapper);
-
+  // Add listeners
   document.getElementById("key").addEventListener("input",update);
   const kw=document.getElementById("keyword");
   kw.addEventListener("input",()=>{kw.value=kw.value.toUpperCase();update();});
