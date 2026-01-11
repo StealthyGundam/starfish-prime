@@ -22,47 +22,28 @@ html, body {
   line-height:1.2;
   user-select:none;
 
-  /* GLOBAL CRT STYLE */
+  /* Global CRT style */
   text-shadow:0 0 2px #0f0, 0 0 4px #0f0;
   animation:flicker 2s infinite alternate;
 }
 
-/* Boot / terminal lines */
 .terminal-line {
   display:block;
   white-space:pre-wrap;
-  cursor:default;
 }
 
-/* Text output container */
 .grid-wrapper {
   margin-top:20px;
   opacity:0;
   transition:opacity 0.5s;
 }
 
-/* Normal flowing text */
-.grid {
-  display:block;
-  white-space:pre-wrap;
-}
-
-/* Individual characters */
-.cell {
-  display:inline;
-  font-size:16px;
-  line-height:1.2;
-}
-
-/* Input placeholders */
 .input-placeholder {
   border-bottom:1px dashed #0f0;
-  display:inline-block;
   padding:0 2px;
-  color:#0f0;
+  display:inline-block;
 }
 
-/* Flicker animation */
 @keyframes flicker {
   0%,19%,21%,23%,25%,54%,56%,100% { opacity:1; }
   20%,22%,24%,55% { opacity:0.5; }
@@ -73,9 +54,7 @@ html, body {
 
 <div id="terminal"></div>
 
-<div class="grid-wrapper">
-  <div id="grid" class="grid"></div>
-</div>
+<div class="grid-wrapper" id="cipher-output"></div>
 
 <script>
 // Cipher setup
@@ -85,59 +64,55 @@ const CIPHER_TEXT =
 "TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN I,G.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
 
 const terminal = document.getElementById("terminal");
-const grid = document.getElementById("grid");
+const cipherOutput = document.getElementById("cipher-output");
 
-// Render text normally
-function renderGrid(chars) {
-  grid.innerHTML = "";
-  for (const ch of chars) {
+// Typewriter line
+function typeLine(container, text, speed = 8) {
+  return new Promise(res => {
     const span = document.createElement("span");
-    span.className = "cell";
-    span.textContent = ch;
-    grid.appendChild(span);
-  }
+    span.className = "terminal-line";
+    container.appendChild(span);
+    let i = 0;
+    const interval = setInterval(() => {
+      span.textContent += text[i++];
+      if (i >= text.length) {
+        clearInterval(interval);
+        res();
+      }
+    }, speed);
+  });
 }
 
-// Initial empty render
-renderGrid(CIPHER_TEXT.split('').map(_ => ' '));
-
-// Update output based on input
-function update() {
+// Decode cipher
+function decodeCipher() {
   const keyEl = document.getElementById("key-line");
   const kwEl = document.getElementById("keyword-line");
-  if (!keyEl || !kwEl) return;
+  if (!keyEl || !kwEl) return "";
 
-  const keyVal = keyEl.textContent.trim() || '0';
-  const kwVal = kwEl.textContent.trim() || '';
-
-  const keyV = BigInt(keyVal);
-  const kw = kwVal.toUpperCase().split("").filter(c => BASE_ALPHABET.includes(c));
+  const keyV = BigInt(keyEl.textContent.trim() || "0");
+  const kw = kwEl.textContent.toUpperCase().split("")
+    .filter(c => BASE_ALPHABET.includes(c));
 
   const seen = new Set();
-  const keyChars = kw.filter(c => {
-    if (seen.has(c)) return false;
-    seen.add(c);
-    return true;
-  });
+  const keyChars = kw.filter(c => !seen.has(c) && seen.add(c));
+  const cipherAlphabet = [...keyChars, ...BASE_ALPHABET.filter(c => !keyChars.includes(c))];
 
-  const remainder = BASE_ALPHABET.filter(c => !keyChars.includes(c));
-  const cipherAlphabet = [...keyChars, ...remainder];
-
-  const output = [];
-  for (const char of CIPHER_TEXT) {
+  return [...CIPHER_TEXT].map(char => {
     const idx = cipherAlphabet.indexOf(char);
-    if (idx === -1) {
-      output.push(char);
-      continue;
-    }
+    if (idx === -1) return char;
     const decIdx = Number((BigInt(idx) ** keyV) % MOD);
-    output.push(BASE_ALPHABET[decIdx] || char);
-  }
-
-  renderGrid(output);
+    return BASE_ALPHABET[decIdx] || char;
+  }).join("");
 }
 
-// Boot sequence
+// Render cipher text exactly like boot text
+async function renderCipher() {
+  cipherOutput.innerHTML = "";
+  cipherOutput.style.opacity = "1";
+  await typeLine(cipherOutput, decodeCipher());
+}
+
+// Boot text
 const bootLines = [
   "ROBOCO INDUSTRIES UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
@@ -155,61 +130,40 @@ const bootLines = [
   "> LOG: Please enter correct decryption key and keyword for access..."
 ];
 
-// Typewriter effect
-async function typeBootLine(line) {
-  return new Promise(res => {
-    const span = document.createElement("span");
-    span.className = "terminal-line";
-    terminal.appendChild(span);
-    let i = 0;
-    const interval = setInterval(() => {
-      span.textContent += line[i];
-      i++;
-      if (i >= line.length) {
-        clearInterval(interval);
-        res();
-      }
-    }, 10);
-  });
-}
-
-// Enable user input
-function enableTypingPlaceholders() {
-  const lines = terminal.querySelectorAll('.terminal-line');
-  lines.forEach(line => {
-    if (line.textContent.includes('Enter Decryption Key: ■')) {
+// Enable inputs
+function enableInputs() {
+  document.querySelectorAll('.terminal-line').forEach(line => {
+    if (line.textContent.includes('Enter Decryption Key')) {
       line.textContent = "| >> Enter Decryption Key: ";
-      const placeholder = document.createElement('span');
-      placeholder.id = 'key-line';
-      placeholder.className = 'input-placeholder';
-      placeholder.textContent = '45';
-      placeholder.contentEditable = 'true';
-      placeholder.addEventListener('input', update);
-      line.appendChild(placeholder);
+      const span = document.createElement("span");
+      span.id = "key-line";
+      span.className = "input-placeholder";
+      span.contentEditable = true;
+      span.textContent = "45";
+      span.addEventListener("input", renderCipher);
+      line.appendChild(span);
     }
 
-    if (line.textContent.includes('Enter Keyword: ■')) {
+    if (line.textContent.includes('Enter Keyword')) {
       line.textContent = "| >> Enter Keyword: ";
-      const placeholder = document.createElement('span');
-      placeholder.id = 'keyword-line';
-      placeholder.className = 'input-placeholder';
-      placeholder.textContent = 'BAMBOOZLE SWIPE';
-      placeholder.contentEditable = 'true';
-      placeholder.addEventListener('input', update);
-      line.appendChild(placeholder);
+      const span = document.createElement("span");
+      span.id = "keyword-line";
+      span.className = "input-placeholder";
+      span.contentEditable = true;
+      span.textContent = "BAMBOOZLE SWIPE";
+      span.addEventListener("input", renderCipher);
+      line.appendChild(span);
     }
   });
-
-  document.querySelector(".grid-wrapper").style.opacity = "1";
-  update();
 }
 
 // Run boot
 async function runBoot() {
   for (const line of bootLines) {
-    await typeBootLine(line);
+    await typeLine(terminal, line);
   }
-  enableTypingPlaceholders();
+  enableInputs();
+  renderCipher();
 }
 
 runBoot();
