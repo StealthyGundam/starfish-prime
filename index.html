@@ -110,7 +110,9 @@ const bootLines = [
   "> LOG: Please enter correct decryption key and keyword for access..."
 ];
 
-/* Render decrypted output */
+/* =========================
+   Render decrypted output
+========================= */
 function renderMessage(text) {
   let block = document.getElementById("message-block");
   if (!block) {
@@ -122,7 +124,9 @@ function renderMessage(text) {
   block.textContent = text;
 }
 
-/* Decryption + Lock Check */
+/* =========================
+   Decryption + Lock Check
+========================= */
 function update() {
   const keyEl = document.getElementById("user-key");
   const kwEl  = document.getElementById("user-keyword");
@@ -161,7 +165,9 @@ function update() {
   }
 }
 
-/* Scale font based on longest boot line */
+/* =========================
+   Scale font based on longest boot line
+========================= */
 function scaleFont() {
   const tempSpan = document.createElement("span");
   tempSpan.style.position = "absolute";
@@ -185,10 +191,13 @@ function scaleFont() {
   document.body.style.fontSize = newFontSize + "px";
 }
 
-/* Typewriter + Boot */
+/* =========================
+   Typewriter + Boot
+========================= */
 async function runBoot() {
   scaleFont();
 
+  // Render first three lines instantly and centered
   for (let i = 0; i < 3; i++) {
     const span = document.createElement("span");
     span.className = "terminal-line centered";
@@ -196,6 +205,7 @@ async function runBoot() {
     terminal.appendChild(span);
   }
 
+  // Type out the rest of the boot sequence
   for (let i = 3; i < bootLines.length; i++) {
     await new Promise(resolve => {
       const span = document.createElement("span");
@@ -212,10 +222,13 @@ async function runBoot() {
     });
   }
 
+  // Attach inputs + render cipher text initially
   enableInputs();
 }
 
-/* Attach User Inputs */
+/* =========================
+   Attach User Inputs
+========================= */
 function enableInputs() {
   const lines = terminal.querySelectorAll(".terminal-line");
   let userLogStarted = false;
@@ -230,7 +243,7 @@ function enableInputs() {
         s.id = "user-key";
         s.className = "input-placeholder";
         s.contentEditable = true;
-        s.textContent = ""; // user must enter key
+        s.textContent = ""; // empty initially
         s.addEventListener("input", update);
         line.appendChild(s);
       }
@@ -241,18 +254,25 @@ function enableInputs() {
         s.id = "user-keyword";
         s.className = "input-placeholder";
         s.contentEditable = true;
-        s.textContent = ""; // user must enter keyword
+        s.textContent = ""; // empty initially
         s.addEventListener("input", update);
         line.appendChild(s);
       }
     }
   });
 
+  // Render cipher text immediately with default empty inputs
   update();
 }
 
+/* =========================
+   Run boot sequence
+========================= */
 runBoot();
 
+/* =========================
+   Re-scale on window resize
+========================= */
 window.addEventListener("resize", () => {
   scaleFont();
   update();
