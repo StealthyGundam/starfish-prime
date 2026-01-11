@@ -27,7 +27,7 @@ html, body {
   animation: flicker 2s infinite alternate;
 }
 
-/* Editable fields */
+/* Editable placeholders */
 .input-placeholder {
   display: inline-block;
   min-width: 2ch;
@@ -150,14 +150,13 @@ function typeLine(line) {
 }
 
 /* =========================
-   Attach inputs
+   Attach User Inputs
 ========================= */
 function enableInputs() {
   const lines = terminal.querySelectorAll(".terminal-line");
   let userKeywordAttached = false;
 
   lines.forEach(line => {
-
     /* User decryption key */
     if (line.textContent.includes("| >> Decryption Key:")) {
       line.textContent = "| >> Decryption Key: ";
@@ -170,8 +169,8 @@ function enableInputs() {
       line.appendChild(s);
     }
 
-    /* User keyword (second keyword only) */
-    if (line.textContent === "| >> Keyword:" && !userKeywordAttached) {
+    /* User keyword (editable) */
+    if (line.textContent.includes("| >> Keyword:") && !userKeywordAttached) {
       userKeywordAttached = true;
       line.textContent = "| >> Keyword: ";
       const s = document.createElement("span");
@@ -189,7 +188,7 @@ function enableInputs() {
 }
 
 /* =========================
-   Run boot
+   Run Boot Sequence
 ========================= */
 (async function runBoot() {
   for (const line of bootLines) {
