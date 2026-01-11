@@ -11,7 +11,7 @@
 <style>
 html, body {
   margin:0;
-  padding:20px;
+  padding:0;
   width:100%;
   height:100%;
   font-family:"IBM Plex Mono", monospace;
@@ -25,6 +25,11 @@ html, body {
   /* Global CRT look */
   text-shadow:0 0 2px #0f0, 0 0 4px #0f0;
   animation:flicker 2s infinite alternate;
+}
+
+#screen {
+  padding:20px;
+  min-height:100vh;
 }
 
 .terminal-line {
@@ -52,10 +57,26 @@ html, body {
 </head>
 <body>
 
-<div id="terminal"></div>
-<div class="grid-wrapper" id="cipher-output"></div>
+<div id="screen">
+  <div id="terminal"></div>
+  <div class="grid-wrapper" id="cipher-output"></div>
+</div>
 
 <script>
+/* ======================
+   AUTO FONT SCALING
+====================== */
+function scaleFont() {
+  const min = 12;
+  const max = 20;
+  const size = window.innerWidth / 70;
+  document.documentElement.style.fontSize =
+    Math.max(min, Math.min(size, max)) + "px";
+}
+
+window.addEventListener("resize", scaleFont);
+scaleFont();
+
 /* ======================
    CONFIG
 ====================== */
