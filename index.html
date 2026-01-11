@@ -32,7 +32,7 @@ html, body {
 
 .input-placeholder {
   display: inline-block;
-  min-width: 2ch;
+  min-width: 1ch;
   border-bottom: 1px dashed #0f0;
   padding: 0 2px;
 }
@@ -59,14 +59,38 @@ html, body {
 <div id="terminal"></div>
 
 <script>
-/* Cipher Configuration */
+/* =========================
+   Cipher Configuration
+========================= */
 const MOD = 29n;
 const BASE_ALPHABET = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ ,."];
+const ENCRYPTION_KEY = 23n;  // Prime exponent used to encrypt
 const CIPHER_TEXT = "TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN I,G.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
 
-const terminal = document.getElementById("terminal");
+/* Correct keyword */
+const CORRECT_KEYWORD = "SUNBLOCKER";
 
-/* Boot Sequence */
+/* Calculate decryption key as modular multiplicative inverse of ENCRYPTION_KEY mod (MOD-1) */
+function modInverse(a, m) {
+  let m0 = m, x0 = 0n, x1 = 1n;
+  if (m === 1n) return 0n;
+  while (a > 1n) {
+    let q = a / m;
+    let t = m;
+    m = a % m;
+    a = t;
+    t = x0;
+    x0 = x1 - q * x0;
+    x1 = t;
+  }
+  if (x1 < 0n) x1 += m0;
+  return x1;
+}
+const DECRYPTION_KEY = modInverse(ENCRYPTION_KEY, MOD - 1n).toString();
+
+/* =========================
+   Boot Sequence
+========================= */
 const bootLines = [
   "PROJECT SUNDIAL UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2026 GUNDAM INDUSTRIES",
@@ -85,19 +109,6 @@ const bootLines = [
   "====================================================",
   "> LOG: Please enter correct decryption key and keyword for access..."
 ];
-
-/* Correct Keyword and Math-based Key */
-const CORRECT_KEYWORD = "SUNBLOCKER";
-function calculateCorrectKey(keyword) {
-  // Sum letters positions (A=1, B=2...) modulo MOD
-  let sum = 0;
-  for (let c of keyword.toUpperCase()) {
-    const idx = BASE_ALPHABET.indexOf(c);
-    if (idx >= 0) sum += (idx + 1); // A=1
-  }
-  return (BigInt(sum) % MOD).toString();
-}
-const CORRECT_KEY = calculateCorrectKey(CORRECT_KEYWORD);
 
 /* Render decrypted output */
 function renderMessage(text) {
@@ -136,13 +147,13 @@ function update() {
   for (const char of CIPHER_TEXT) {
     const idx = cipherAlphabet.indexOf(char);
     if (idx === -1) output += char;
-    else output += BASE_ALPHABET[Number((BigInt(idx) ** key) % MOD)] || char;
+    else output += BASE_ALPHABET[Number((idx ** key) % MOD)] || char;
   }
 
   renderMessage(output);
 
-  // Lock if correct
-  if (keyVal === CORRECT_KEY && kwVal === CORRECT_KEYWORD.toUpperCase()) {
+  // Lock fields if correct
+  if (keyVal === DECRYPTION_KEY && kwVal === CORRECT_KEYWORD.toUpperCase()) {
     keyEl.contentEditable = false;
     kwEl.contentEditable = false;
     keyEl.style.borderBottom = "none";
