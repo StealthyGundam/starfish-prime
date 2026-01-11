@@ -8,7 +8,7 @@
 <style>
 html, body {
   margin: 0;
-  padding: 20px;
+  padding: 5px;
   font-family: "Courier New", monospace;
   background: #010;
   color: #0f0;
@@ -24,6 +24,11 @@ html, body {
   display: block;
   white-space: pre-wrap; /* wrap long lines */
   animation: flicker 2s infinite alternate;
+}
+
+/* Centered lines */
+.centered {
+  text-align: center;
 }
 
 /* Editable placeholders */
@@ -163,10 +168,14 @@ function scaleFont() {
 /* =========================
    Typewriter effect
 ========================= */
-function typeLine(line) {
+function typeLine(line, index) {
   return new Promise(resolve => {
     const span = document.createElement("span");
     span.className = "terminal-line";
+
+    // Center first three lines
+    if (index < 3) span.classList.add("centered");
+
     terminal.appendChild(span);
     let i = 0;
     const timer = setInterval(() => {
@@ -221,9 +230,11 @@ function enableInputs() {
    Run Boot Sequence
 ========================= */
 async function runBoot() {
-  scaleFont(); // initial scaling before rendering lines
-  for (const line of bootLines) await typeLine(line);
-  enableInputs(); // attach inputs + render cipher text initially
+  scaleFont(); // initial scaling
+  for (let i = 0; i < bootLines.length; i++) {
+    await typeLine(bootLines[i], i);
+  }
+  enableInputs(); // attach inputs + render cipher text
 }
 
 runBoot();
