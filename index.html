@@ -21,15 +21,16 @@ html, body {
   overflow-x:hidden;
   line-height:1.2;
   user-select:none;
+
+  /* GLOBAL CRT STYLE */
+  text-shadow:0 0 2px #0f0, 0 0 4px #0f0;
+  animation:flicker 2s infinite alternate;
 }
 
-/* CRT text glow/flicker */
+/* Boot / terminal lines */
 .terminal-line {
   display:block;
-  color:#0f0;
-  text-shadow:0 0 2px #0f0, 0 0 4px #0f0;
   white-space:pre-wrap;
-  animation:flicker 2s infinite alternate;
   cursor:default;
 }
 
@@ -51,21 +52,20 @@ html, body {
   display:inline;
   font-size:16px;
   line-height:1.2;
-  color:#0f0;
-  text-shadow:0 0 2px #0f0;
-  animation:flicker 2s infinite alternate;
 }
 
-@keyframes flicker {
-  0%,19%,21%,23%,25%,54%,56%,100% { opacity:1; }
-  20%,22%,24%,55% { opacity:0.5; }
-}
-
+/* Input placeholders */
 .input-placeholder {
   border-bottom:1px dashed #0f0;
   display:inline-block;
   padding:0 2px;
   color:#0f0;
+}
+
+/* Flicker animation */
+@keyframes flicker {
+  0%,19%,21%,23%,25%,54%,56%,100% { opacity:1; }
+  20%,22%,24%,55% { opacity:0.5; }
 }
 </style>
 </head>
@@ -87,23 +87,18 @@ const CIPHER_TEXT =
 const terminal = document.getElementById("terminal");
 const grid = document.getElementById("grid");
 
-// Create character spans
-let cells = [];
-
 // Render text normally
 function renderGrid(chars) {
   grid.innerHTML = "";
-  cells = [];
   for (const ch of chars) {
     const span = document.createElement("span");
     span.className = "cell";
     span.textContent = ch;
     grid.appendChild(span);
-    cells.push(span);
   }
 }
 
-// Render empty output initially
+// Initial empty render
 renderGrid(CIPHER_TEXT.split('').map(_ => ' '));
 
 // Update output based on input
@@ -178,7 +173,7 @@ async function typeBootLine(line) {
   });
 }
 
-// Enable user inputs
+// Enable user input
 function enableTypingPlaceholders() {
   const lines = terminal.querySelectorAll('.terminal-line');
   lines.forEach(line => {
