@@ -8,7 +8,7 @@
 <style>
 html, body {
   margin: 0;
-  padding: 5px;
+  padding: 1ch; /* updated */
   font-family: "Courier New", monospace;
   background: #010;
   color: #0f0;
@@ -40,14 +40,16 @@ html, body {
   padding: 0 2px;
 }
 
-/* Cipher text block */
+/* Cipher text block matches boot style */
 #message-block {
   white-space: pre-wrap; /* wrap long cipher text */
   max-width: 100%;
   margin-top: 10px;
   word-wrap: break-word;
+  display: block;
+  animation: flicker 2s infinite alternate;
+  text-shadow: 0 0 2px #0f0, 0 0 4px #0f0;
 }
-
 @keyframes flicker {
   0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; }
   20%,22%,24%,55% { opacity: 0.5; }
@@ -89,7 +91,6 @@ const bootLines = [
   "| >> Decryption Key: ■■■",
   "| >> Keyword: ■■■■■■■■■■",
   "====================================================",
- 
   "> LOG: Please enter correct decryption key and keyword for access..."
 ];
 
@@ -101,9 +102,10 @@ function renderMessage(text) {
   if (!block) {
     block = document.createElement("div");
     block.id = "message-block";
+    block.className = "terminal-line"; // same style as boot sequence
     terminal.appendChild(block);
   }
-  block.textContent = text; // wraps naturally
+  block.textContent = text;
 }
 
 /* =========================
@@ -158,8 +160,8 @@ function scaleFont() {
 
   document.body.removeChild(tempSpan);
 
-  const viewportWidth = window.innerWidth - 40; // padding buffer
-  const defaultFontSize = 16; // px
+  const viewportWidth = window.innerWidth - 40;
+  const defaultFontSize = 16;
   const scaleFactor = viewportWidth / longestWidth;
   const newFontSize = Math.min(defaultFontSize * scaleFactor, defaultFontSize);
   document.body.style.fontSize = newFontSize + "px";
@@ -179,7 +181,7 @@ async function runBoot() {
     terminal.appendChild(span);
   }
 
-  // Type out the rest of the boot sequence
+  // Type out the rest of the boot sequence with 25ms interval
   for (let i = 3; i < bootLines.length; i++) {
     await new Promise(resolve => {
       const span = document.createElement("span");
@@ -192,7 +194,7 @@ async function runBoot() {
           clearInterval(timer);
           resolve();
         }
-      }, 10);
+      }, 25); // updated interval
     });
   }
 
@@ -244,7 +246,7 @@ runBoot();
 ========================= */
 window.addEventListener("resize", () => {
   scaleFont();
-  update(); // re-render cipher text after font resize
+  update();
 });
 </script>
 
