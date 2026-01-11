@@ -29,6 +29,7 @@ html, body {
 /* Centered lines */
 .centered {
   text-align: center;
+  animation: none; /* remove flicker/typewriter effect for header */
 }
 
 /* Editable placeholders */
@@ -73,22 +74,23 @@ const terminal = document.getElementById("terminal");
    Boot Sequence
 ========================= */
 const bootLines = [
-  "PROJECT GUNDAM INDUSTRIES UNIFIED OPERATING SYSTEM",
+  "PROJECT SUNDIAL OPERATING SYSTEM",
   "COPYRIGHT 2026 GUNDAM INDUSTRIES",
-  "-Gundam Trespasser Management System-",
+  "-Trespasser Management System-",
   "==========================",
   "| Administrator Log:",
   "| >> Encryption Key: ■■■",
   "| >> Keyword: ■■■■■■■■■■",
   "==========================",
-  "> run:// calcs E:\\message.text /P eveveryone:f",
+  "> run:// calcs E:\\message.txt /P eveveryone:f",
+  "> run:// -encrypt message.txt",
+    "> LOG: Please enter correct decryption key and keyword for access..."
   "==========================",
   "| User Log:",
   "| >> Decryption Key: ■■■",
   "| >> Keyword: ■■■■■■■■■■",
   "==========================",
-  "> run:// search -locked terminal",
-  "> LOG: Please enter correct decryption key and keyword for access..."
+
 ];
 
 /* =========================
@@ -168,24 +170,35 @@ function scaleFont() {
 /* =========================
    Typewriter effect
 ========================= */
-function typeLine(line, index) {
-  return new Promise(resolve => {
+async function runBoot() {
+  scaleFont(); // initial scaling
+
+  // Render first three lines instantly and centered
+  for (let i = 0; i < 3; i++) {
     const span = document.createElement("span");
-    span.className = "terminal-line";
-
-    // Center first three lines
-    if (index < 3) span.classList.add("centered");
-
+    span.className = "terminal-line centered";
+    span.textContent = bootLines[i];
     terminal.appendChild(span);
-    let i = 0;
-    const timer = setInterval(() => {
-      span.textContent += line[i++];
-      if (i >= line.length) {
-        clearInterval(timer);
-        resolve();
-      }
-    }, 10);
-  });
+  }
+
+  // Type out the rest of the boot sequence
+  for (let i = 3; i < bootLines.length; i++) {
+    await new Promise(resolve => {
+      const span = document.createElement("span");
+      span.className = "terminal-line";
+      terminal.appendChild(span);
+      let j = 0;
+      const timer = setInterval(() => {
+        span.textContent += bootLines[i][j++];
+        if (j >= bootLines[i].length) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 10);
+    });
+  }
+
+  enableInputs(); // attach inputs + render cipher text
 }
 
 /* =========================
@@ -224,17 +237,6 @@ function enableInputs() {
   });
 
   update(); // render cipher text immediately
-}
-
-/* =========================
-   Run Boot Sequence
-========================= */
-async function runBoot() {
-  scaleFont(); // initial scaling
-  for (let i = 0; i < bootLines.length; i++) {
-    await typeLine(bootLines[i], i);
-  }
-  enableInputs(); // attach inputs + render cipher text
 }
 
 runBoot();
