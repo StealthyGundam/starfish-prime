@@ -19,7 +19,7 @@ html, body {
   text-shadow: 0 0 2px #0f0, 0 0 4px #0f0;
 }
 
-/* Typed terminal lines */
+/* Terminal lines */
 .terminal-line {
   display: block;
   white-space: pre-wrap; /* wrap long lines */
@@ -55,6 +55,113 @@ const CIPHER_TEXT =
 "TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN I,G.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
 
 const terminal = document.getElementById("terminal");
+
+/* =========================
+   Boot Sequence
+========================= */
+const bootLines = [
+  "PROJECT GUNDAM INDUSTRIES UNIFIED OPERATING SYSTEM",
+  "COPYRIGHT 2026 GUNDAM INDUSTRIES",
+  "-Gundam Trespasser Management System-",
+  "==========================",
+  "| Administrator Log:",
+  "| >> Encryption Key: ■■■",
+  "| >> Keyword: ■■■■■■■■■■",
+  "==========================",
+  "> run:// calcs E:\\message.text /P eveveryone:f",
+  "==========================",
+  "| User Log:",
+  "| >> Decryption Key: ■■■",
+  "| >> Keyword: ■■■■■■■■■■",
+  "==========================",
+  "> run:// search -locked terminal",
+  "> LOG: Please enter correct decryption key and keyword for access..."
+];
+
+/* =========================
+   Measure longest line and scale font
+========================= */
+function scaleFont() {
+  // Create a temporary span to measure text width
+  const tempSpan = document.createElement("span");
+  tempSpan.style.position = "absolute";
+  tempSpan.style.visibility = "hidden";
+  tempSpan.style.whiteSpace = "pre";
+  document.body.appendChild(tempSpan);
+
+  let longestWidth = 0;
+  bootLines.forEach(line => {
+    tempSpan.textContent = line;
+    const w = tempSpan.offsetWidth;
+    if (w > longestWidth) longestWidth = w;
+  });
+
+  document.body.removeChild(tempSpan);
+
+  // Calculate scale factor to fit viewport width (minus padding)
+  const viewportWidth = window.innerWidth - 40; // 20px padding each side
+  const defaultFontSize = 16; // px
+  const scaleFactor = viewportWidth / longestWidth;
+  const newFontSize = Math.min(defaultFontSize * scaleFactor, defaultFontSize);
+  document.body.style.fontSize = newFontSize + "px";
+}
+
+/* =========================
+   Typewriter effect
+========================= */
+function typeLine(line) {
+  return new Promise(resolve => {
+    const span = document.createElement("span");
+    span.className = "terminal-line";
+    terminal.appendChild(span);
+    let i = 0;
+    const timer = setInterval(() => {
+      span.textContent += line[i++];
+      if (i >= line.length) {
+        clearInterval(timer);
+        resolve();
+      }
+    }, 10);
+  });
+}
+
+/* =========================
+   Attach User Inputs ONLY
+========================= */
+function enableInputs() {
+  const lines = terminal.querySelectorAll(".terminal-line");
+  let userLogStarted = false;
+
+  lines.forEach(line => {
+    if (line.textContent.includes("| User Log:")) userLogStarted = true;
+
+    if (userLogStarted) {
+      if (line.textContent.includes("| >> Decryption Key:")) {
+        line.textContent = "| >> Decryption Key: ";
+        const s = document.createElement("span");
+        s.id = "user-key";
+        s.className = "input-placeholder";
+        s.contentEditable = true;
+        s.textContent = "45";
+        s.addEventListener("input", update);
+        line.appendChild(s);
+      }
+
+      if (line.textContent.includes("| >> Keyword:")) {
+        line.textContent = "| >> Keyword: ";
+        const s = document.createElement("span");
+        s.id = "user-keyword";
+        s.className = "input-placeholder";
+        s.contentEditable = true;
+        s.textContent = "BAMBOOZLE SWIPE";
+        s.addEventListener("input", update);
+        line.appendChild(s);
+      }
+    }
+  });
+
+  update(); // render cipher immediately
+}
 
 /* =========================
    Render decrypted output
@@ -96,105 +203,19 @@ function update() {
   let output = "";
   for (const char of CIPHER_TEXT) {
     const idx = cipherAlphabet.indexOf(char);
-    if (idx === -1) {
-      output += char;
-    } else {
-      const decIdx = Number((BigInt(idx) ** key) % MOD);
-      output += BASE_ALPHABET[decIdx] || char;
-    }
+    if (idx === -1) output += char;
+    else output += BASE_ALPHABET[Number((BigInt(idx) ** key) % MOD)] || char;
   }
 
   renderMessage(output);
 }
 
 /* =========================
-   Boot Sequence
-========================= */
-const bootLines = [
-  "PROJECT GUNDAM INDUSTRIES UNIFIED OPERATING SYSTEM",
-  "COPYRIGHT 2026 GUNDAM INDUSTRIES",
-  "-Gundam Trespasser Management System-",
-  "==========================",
-  "| Administrator Log:",
-  "| >> Encryption Key: ■■■",
-  "| >> Keyword: ■■■■■■■■■■",
-  "==========================",
-  "> run:// calcs E:\\message.text /P eveveryone:f",
-  "==========================",
-  "| User Log:",
-  "| >> Decryption Key: ■■■",
-  "| >> Keyword: ■■■■■■■■■■",
-  "==========================",
-  "> run:// search -locked terminal",
-  "> LOG: Please enter correct decryption key and keyword for access..."
-];
-
-/* =========================
-   Typewriter effect
-========================= */
-function typeLine(line) {
-  return new Promise(resolve => {
-    const span = document.createElement("span");
-    span.className = "terminal-line";
-    terminal.appendChild(span);
-    let i = 0;
-    const timer = setInterval(() => {
-      span.textContent += line[i++];
-      if (i >= line.length) {
-        clearInterval(timer);
-        resolve();
-      }
-    }, 10);
-  });
-}
-
-/* =========================
-   Attach User Inputs ONLY
-========================= */
-function enableInputs() {
-  const lines = terminal.querySelectorAll(".terminal-line");
-  let userLogStarted = false;
-
-  lines.forEach(line => {
-    if (line.textContent.includes("| User Log:")) {
-      userLogStarted = true;
-    }
-
-    if (userLogStarted) {
-      if (line.textContent.includes("| >> Decryption Key:")) {
-        line.textContent = "| >> Decryption Key: ";
-        const s = document.createElement("span");
-        s.id = "user-key";
-        s.className = "input-placeholder";
-        s.contentEditable = true;
-        s.textContent = "45";
-        s.addEventListener("input", update);
-        line.appendChild(s);
-      }
-
-      if (line.textContent.includes("| >> Keyword:")) {
-        line.textContent = "| >> Keyword: ";
-        const s = document.createElement("span");
-        s.id = "user-keyword";
-        s.className = "input-placeholder";
-        s.contentEditable = true;
-        s.textContent = "BAMBOOZLE SWIPE";
-        s.addEventListener("input", update);
-        line.appendChild(s);
-      }
-    }
-  });
-
-  update(); // render cipher immediately
-}
-
-/* =========================
    Run Boot Sequence
 ========================= */
 (async function runBoot() {
-  for (const line of bootLines) {
-    await typeLine(line);
-  }
+  scaleFont(); // scale font based on longest boot line
+  for (const line of bootLines) await typeLine(line);
   enableInputs();
 })();
 </script>
