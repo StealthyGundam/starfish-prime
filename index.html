@@ -8,7 +8,7 @@
 <style>
 html, body {
   margin: 0;
-  padding: 5px;
+  padding: 20px;
   font-family: "Courier New", monospace;
   background: #010;
   color: #0f0;
@@ -37,7 +37,9 @@ html, body {
 /* Cipher text block */
 #message-block {
   white-space: pre-wrap; /* wrap long cipher text */
+  max-width: 100%;
   margin-top: 20px;
+  word-wrap: break-word;
 }
 
 @keyframes flicker {
@@ -83,51 +85,6 @@ const bootLines = [
   "> run:// search -locked terminal",
   "> LOG: Please enter correct decryption key and keyword for access..."
 ];
-
-/* =========================
-   Scale font based on longest boot line
-========================= */
-function scaleFont() {
-  const tempSpan = document.createElement("span");
-  tempSpan.style.position = "absolute";
-  tempSpan.style.visibility = "hidden";
-  tempSpan.style.whiteSpace = "pre";
-  document.body.appendChild(tempSpan);
-
-  let longestWidth = 0;
-  bootLines.forEach(line => {
-    tempSpan.textContent = line;
-    const w = tempSpan.offsetWidth;
-    if (w > longestWidth) longestWidth = w;
-  });
-
-  document.body.removeChild(tempSpan);
-
-  const viewportWidth = window.innerWidth - 40; // padding buffer
-  const defaultFontSize = 16; // px
-  const scaleFactor = viewportWidth / longestWidth;
-  const newFontSize = Math.min(defaultFontSize * scaleFactor, defaultFontSize);
-  document.body.style.fontSize = newFontSize + "px";
-}
-
-/* =========================
-   Typewriter effect
-========================= */
-function typeLine(line) {
-  return new Promise(resolve => {
-    const span = document.createElement("span");
-    span.className = "terminal-line";
-    terminal.appendChild(span);
-    let i = 0;
-    const timer = setInterval(() => {
-      span.textContent += line[i++];
-      if (i >= line.length) {
-        clearInterval(timer);
-        resolve();
-      }
-    }, 10);
-  });
-}
 
 /* =========================
    Render decrypted output
@@ -176,6 +133,53 @@ function update() {
 }
 
 /* =========================
+   Scale font based on longest boot line
+========================= */
+function scaleFont() {
+  const tempSpan = document.createElement("span");
+  tempSpan.style.position = "absolute";
+  tempSpan.style.visibility = "hidden";
+  tempSpan.style.whiteSpace = "pre";
+  document.body.appendChild(tempSpan);
+
+  let longestWidth = 0;
+  bootLines.forEach(line => {
+    tempSpan.textContent = line;
+    const w = tempSpan.offsetWidth;
+    if (w > longestWidth) longestWidth = w;
+  });
+
+  document.body.removeChild(tempSpan);
+
+  const viewportWidth = window.innerWidth - 40; // padding buffer
+  const defaultFontSize = 16; // px
+  const scaleFactor = viewportWidth / longestWidth;
+  const newFontSize = Math.min(defaultFontSize * scaleFactor, defaultFontSize);
+  document.body.style.fontSize = newFontSize + "px";
+
+  update(); // re-render cipher text after font resize
+}
+
+/* =========================
+   Typewriter effect
+========================= */
+function typeLine(line) {
+  return new Promise(resolve => {
+    const span = document.createElement("span");
+    span.className = "terminal-line";
+    terminal.appendChild(span);
+    let i = 0;
+    const timer = setInterval(() => {
+      span.textContent += line[i++];
+      if (i >= line.length) {
+        clearInterval(timer);
+        resolve();
+      }
+    }, 10);
+  });
+}
+
+/* =========================
    Attach User Inputs ONLY
 ========================= */
 function enableInputs() {
@@ -216,11 +220,18 @@ function enableInputs() {
 /* =========================
    Run Boot Sequence
 ========================= */
-(async function runBoot() {
-  scaleFont(); // scale font size for longest boot line
+async function runBoot() {
+  scaleFont(); // initial scaling before rendering lines
   for (const line of bootLines) await typeLine(line);
-  enableInputs(); // attach inputs and render wrapped cipher text immediately
-})();
+  enableInputs(); // attach inputs + render cipher text initially
+}
+
+runBoot();
+
+/* =========================
+   Dynamically rescale on window resize
+========================= */
+window.addEventListener("resize", scaleFont);
 </script>
 
 </body>
