@@ -3,14 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RobCo Terminal Cipher Grid</title>
+<title>RobCo Terminal Cipher</title>
+
+<!-- IBM Plex Mono -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+
 <style>
 html, body {
-  margin:0; padding:20px;
-  width:100%; height:100%;
-  font-family:'Courier New', monospace;
-  background:#010; color:#0f0;
-  overflow-y:auto; overflow-x:hidden;
+  margin:0;
+  padding:20px;
+  width:100%;
+  height:100%;
+  font-family:"IBM Plex Mono", monospace;
+  background:#010;
+  color:#0f0;
+  overflow-y:auto;
+  overflow-x:hidden;
   line-height:1.2;
   user-select:none;
 }
@@ -19,25 +27,46 @@ html, body {
 .terminal-line {
   display:block;
   color:#0f0;
-  text-shadow:0 0 2px #0f0,0 0 4px #0f0;
+  text-shadow:0 0 2px #0f0, 0 0 4px #0f0;
   white-space:pre-wrap;
-  animation: flicker 2s infinite alternate;
+  animation:flicker 2s infinite alternate;
   cursor:default;
 }
 
-/* Grid wrapper */
-.grid-wrapper { display:flex; justify-content:center; align-items:flex-start; padding:10px; position:relative; overflow:hidden; opacity:0; transition:opacity 0.5s; margin-top:20px; }
-.grid-wrapper::before { content:""; position:absolute; top:0; left:0; width:100%; height:100%; background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0.08) 1px); pointer-events:none; z-index:2; }
-.grid-wrapper::after { content:""; position:absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, rgba(0,255,0,0.05) 0%, transparent 80%); pointer-events:none; z-index:1; animation: pulseGlow 3s infinite alternate; }
+/* Text output container */
+.grid-wrapper {
+  margin-top:20px;
+  opacity:0;
+  transition:opacity 0.5s;
+}
 
-/* Grid */
-.grid { display:grid; grid-template-columns:repeat(20,1fr); grid-template-rows:repeat(20,1fr); width:100%; max-width:90vmin; aspect-ratio:1/1; z-index:3; position:relative; }
-.cell { display:flex; align-items:center; justify-content:center; font-size:clamp(10px,2vw,18px); line-height:1; color:#0f0; text-shadow:0 0 2px #0f0,0 0 4px #0f0; animation: flicker 2s infinite alternate; }
-.solved .cell { color:#0ff; text-shadow:0 0 6px #0ff,0 0 12px #0ff; }
+/* Normal flowing text */
+.grid {
+  display:block;
+  white-space:pre-wrap;
+}
 
-@keyframes flicker { 0%,19%,21%,23%,25%,54%,56%,100%{opacity:1;} 20%,22%,24%,55%{opacity:0.5;} }
-@keyframes pulseGlow {0%{opacity:0.03;}50%{opacity:0.08;}100%{opacity:0.03;}}
-.input-placeholder { border-bottom:1px dashed #0f0; display:inline-block; padding:0 2px; color:#0f0; }
+/* Individual characters */
+.cell {
+  display:inline;
+  font-size:16px;
+  line-height:1.2;
+  color:#0f0;
+  text-shadow:0 0 2px #0f0;
+  animation:flicker 2s infinite alternate;
+}
+
+@keyframes flicker {
+  0%,19%,21%,23%,25%,54%,56%,100% { opacity:1; }
+  20%,22%,24%,55% { opacity:0.5; }
+}
+
+.input-placeholder {
+  border-bottom:1px dashed #0f0;
+  display:inline-block;
+  padding:0 2px;
+  color:#0f0;
+}
 </style>
 </head>
 <body>
@@ -50,44 +79,62 @@ html, body {
 
 <script>
 // Cipher setup
-const PRIME_KEY=23n, MOD=29n;
-const BASE_ALPHABET=[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ ,."];
-const CIPHER_TEXT="TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN I,G.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
+const PRIME_KEY = 23n, MOD = 29n;
+const BASE_ALPHABET = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ ,."];
+const CIPHER_TEXT =
+"TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN I,G.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
 
-const terminal=document.getElementById("terminal");
-const grid=document.getElementById("grid");
+const terminal = document.getElementById("terminal");
+const grid = document.getElementById("grid");
 
-// Precreate 400 grid cells
-const cells=[];
-for(let i=0;i<400;i++){let c=document.createElement("div");c.className="cell";c.textContent=" ";grid.appendChild(c);cells.push(c);}
+// Create character spans
+let cells = [];
 
-// Render grid
-function renderGrid(chars){
-  for(let i=0;i<400;i++) cells[i].textContent=chars[i]||' ';
+// Render text normally
+function renderGrid(chars) {
+  grid.innerHTML = "";
+  cells = [];
+  for (const ch of chars) {
+    const span = document.createElement("span");
+    span.className = "cell";
+    span.textContent = ch;
+    grid.appendChild(span);
+    cells.push(span);
+  }
 }
 
-// Render default empty grid immediately
-renderGrid(CIPHER_TEXT.split('').map(_=>' '));
+// Render empty output initially
+renderGrid(CIPHER_TEXT.split('').map(_ => ' '));
 
-// Update grid based on typed input
-function update(){
-  const keyEl=document.getElementById("key-line");
-  const kwEl=document.getElementById("keyword-line");
-  if(!keyEl || !kwEl) return;
+// Update output based on input
+function update() {
+  const keyEl = document.getElementById("key-line");
+  const kwEl = document.getElementById("keyword-line");
+  if (!keyEl || !kwEl) return;
+
   const keyVal = keyEl.textContent.trim() || '0';
   const kwVal = kwEl.textContent.trim() || '';
 
-  const keyV = keyVal ? BigInt(keyVal) : 0n;
-  const kw = kwVal.toUpperCase().split("").filter(c=>BASE_ALPHABET.includes(c));
+  const keyV = BigInt(keyVal);
+  const kw = kwVal.toUpperCase().split("").filter(c => BASE_ALPHABET.includes(c));
+
   const seen = new Set();
-  const keyChars = kw.filter(c=>{ if(seen.has(c)) return false; seen.add(c); return true; });
-  const remainder = BASE_ALPHABET.filter(c=>!keyChars.includes(c));
+  const keyChars = kw.filter(c => {
+    if (seen.has(c)) return false;
+    seen.add(c);
+    return true;
+  });
+
+  const remainder = BASE_ALPHABET.filter(c => !keyChars.includes(c));
   const cipherAlphabet = [...keyChars, ...remainder];
 
   const output = [];
-  for(const char of CIPHER_TEXT){
+  for (const char of CIPHER_TEXT) {
     const idx = cipherAlphabet.indexOf(char);
-    if(idx===-1){ output.push(char); continue; }
+    if (idx === -1) {
+      output.push(char);
+      continue;
+    }
     const decIdx = Number((BigInt(idx) ** keyV) % MOD);
     output.push(BASE_ALPHABET[decIdx] || char);
   }
@@ -96,7 +143,7 @@ function update(){
 }
 
 // Boot sequence
-const bootLines=[
+const bootLines = [
   "ROBOCO INDUSTRIES UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
   "-RobCo Trespasser Management System-",
@@ -104,68 +151,74 @@ const bootLines=[
   "| User Log:",
   "| >> Enter Decryption Key: ■■■",
   "| >> Enter Keyword: ■■■■■■■■■■",
+  "|",
+  "| Administrator Log:",
+  "| >> Encryption Key: ■■■",
+  "| >> Keyword: ■■■■■■■■■■",
   "==========================",
   "> run:// search -locked terminal",
   "> LOG: Please enter correct decryption key and keyword for access..."
 ];
 
-// Type boot line by line
-async function typeBootLine(line){
-  return new Promise(res=>{
-    const span=document.createElement("span");
-    span.className="terminal-line";
+// Typewriter effect
+async function typeBootLine(line) {
+  return new Promise(res => {
+    const span = document.createElement("span");
+    span.className = "terminal-line";
     terminal.appendChild(span);
-    let i=0;
-    const interval=setInterval(()=>{
+    let i = 0;
+    const interval = setInterval(() => {
       span.textContent += line[i];
       i++;
-      if(i>=line.length){ clearInterval(interval); res(); }
-    },10); // FAST
+      if (i >= line.length) {
+        clearInterval(interval);
+        res();
+      }
+    }, 10);
   });
 }
 
-// Enable editable placeholders AND auto-fill default values
-function enableTypingPlaceholders(){
+// Enable user inputs
+function enableTypingPlaceholders() {
   const lines = terminal.querySelectorAll('.terminal-line');
-  lines.forEach(line=>{
-    if(line.textContent.includes('Enter Decryption Key: ■')) {
-      const parts = line.textContent.split('■');
-      line.textContent = parts[0];
+  lines.forEach(line => {
+    if (line.textContent.includes('Enter Decryption Key: ■')) {
+      line.textContent = "| >> Enter Decryption Key: ";
       const placeholder = document.createElement('span');
-      placeholder.id='key-line';
-      placeholder.className='input-placeholder';
-      placeholder.textContent='45'; // <-- default decryption key
-      line.appendChild(placeholder);
-      placeholder.contentEditable='true'; // already editable
+      placeholder.id = 'key-line';
+      placeholder.className = 'input-placeholder';
+      placeholder.textContent = '45';
+      placeholder.contentEditable = 'true';
       placeholder.addEventListener('input', update);
+      line.appendChild(placeholder);
     }
-    if(line.textContent.includes('Enter Keyword: ■')) {
-      const parts = line.textContent.split('■');
-      line.textContent = parts[0];
+
+    if (line.textContent.includes('Enter Keyword: ■')) {
+      line.textContent = "| >> Enter Keyword: ";
       const placeholder = document.createElement('span');
-      placeholder.id='keyword-line';
-      placeholder.className='input-placeholder';
-      placeholder.textContent='BAMBOOZLE SWIPE'; // <-- default keyword
-      line.appendChild(placeholder);
-      placeholder.contentEditable='true'; // already editable
+      placeholder.id = 'keyword-line';
+      placeholder.className = 'input-placeholder';
+      placeholder.textContent = 'BAMBOOZLE SWIPE';
+      placeholder.contentEditable = 'true';
       placeholder.addEventListener('input', update);
+      line.appendChild(placeholder);
     }
   });
 
-  // Show grid after boot
-  document.querySelector(".grid-wrapper").style.opacity="1";
-
-  // Immediately update grid with default values
+  document.querySelector(".grid-wrapper").style.opacity = "1";
   update();
 }
 
 // Run boot
-async function runBoot(){
-  for(const line of bootLines) await typeBootLine(line);
+async function runBoot() {
+  for (const line of bootLines) {
+    await typeBootLine(line);
+  }
   enableTypingPlaceholders();
 }
 
 runBoot();
 </script>
+
 </body>
 </html>
