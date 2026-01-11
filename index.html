@@ -8,7 +8,7 @@
 <style>
 html, body {
   margin: 0;
-  padding: 1ch; /* updated */
+  padding: 1ch;
   font-family: "Courier New", monospace;
   background: #010;
   color: #0f0;
@@ -19,20 +19,17 @@ html, body {
   text-shadow: 0 0 2px #0f0, 0 0 4px #0f0;
 }
 
-/* Terminal lines */
 .terminal-line {
   display: block;
-  white-space: pre-wrap; /* wrap long lines */
+  white-space: pre-wrap;
   animation: flicker 2s infinite alternate;
 }
 
-/* Centered header lines */
 .centered {
   text-align: center;
-  animation: none; /* remove flicker/typewriter effect */
+  animation: none;
 }
 
-/* Editable placeholders */
 .input-placeholder {
   display: inline-block;
   min-width: 2ch;
@@ -40,9 +37,8 @@ html, body {
   padding: 0 2px;
 }
 
-/* Cipher text block matches boot style */
 #message-block {
-  white-space: pre-wrap; /* wrap long cipher text */
+  white-space: pre-wrap;
   max-width: 100%;
   margin-top: 10px;
   word-wrap: break-word;
@@ -50,6 +46,7 @@ html, body {
   animation: flicker 2s infinite alternate;
   text-shadow: 0 0 2px #0f0, 0 0 4px #0f0;
 }
+
 @keyframes flicker {
   0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; }
   20%,22%,24%,55% { opacity: 0.5; }
@@ -62,19 +59,14 @@ html, body {
 <div id="terminal"></div>
 
 <script>
-/* =========================
-   Cipher Configuration
-========================= */
+/* Cipher Configuration */
 const MOD = 29n;
 const BASE_ALPHABET = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ ,."];
-const CIPHER_TEXT =
-"TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN I,G.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
+const CIPHER_TEXT = "TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN I,G.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
 
 const terminal = document.getElementById("terminal");
 
-/* =========================
-   Boot Sequence
-========================= */
+/* Boot Sequence */
 const bootLines = [
   "PROJECT SUNDIAL UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2026 GUNDAM INDUSTRIES",
@@ -94,23 +86,32 @@ const bootLines = [
   "> LOG: Please enter correct decryption key and keyword for access..."
 ];
 
-/* =========================
-   Render decrypted output
-========================= */
+/* Correct Keyword and Math-based Key */
+const CORRECT_KEYWORD = "SUNBLOCKER";
+function calculateCorrectKey(keyword) {
+  // Sum letters positions (A=1, B=2...) modulo MOD
+  let sum = 0;
+  for (let c of keyword.toUpperCase()) {
+    const idx = BASE_ALPHABET.indexOf(c);
+    if (idx >= 0) sum += (idx + 1); // A=1
+  }
+  return (BigInt(sum) % MOD).toString();
+}
+const CORRECT_KEY = calculateCorrectKey(CORRECT_KEYWORD);
+
+/* Render decrypted output */
 function renderMessage(text) {
   let block = document.getElementById("message-block");
   if (!block) {
     block = document.createElement("div");
     block.id = "message-block";
-    block.className = "terminal-line"; // same style as boot sequence
+    block.className = "terminal-line";
     terminal.appendChild(block);
   }
   block.textContent = text;
 }
 
-/* =========================
-   Decryption logic
-========================= */
+/* Decryption + Lock Check */
 function update() {
   const keyEl = document.getElementById("user-key");
   const kwEl  = document.getElementById("user-keyword");
@@ -139,11 +140,17 @@ function update() {
   }
 
   renderMessage(output);
+
+  // Lock if correct
+  if (keyVal === CORRECT_KEY && kwVal === CORRECT_KEYWORD.toUpperCase()) {
+    keyEl.contentEditable = false;
+    kwEl.contentEditable = false;
+    keyEl.style.borderBottom = "none";
+    kwEl.style.borderBottom = "none";
+  }
 }
 
-/* =========================
-   Scale font based on longest boot line
-========================= */
+/* Scale font based on longest boot line */
 function scaleFont() {
   const tempSpan = document.createElement("span");
   tempSpan.style.position = "absolute";
@@ -167,13 +174,10 @@ function scaleFont() {
   document.body.style.fontSize = newFontSize + "px";
 }
 
-/* =========================
-   Typewriter effect + boot
-========================= */
+/* Typewriter + Boot */
 async function runBoot() {
-  scaleFont(); // initial scaling
+  scaleFont();
 
-  // Render first three lines instantly and centered
   for (let i = 0; i < 3; i++) {
     const span = document.createElement("span");
     span.className = "terminal-line centered";
@@ -181,7 +185,6 @@ async function runBoot() {
     terminal.appendChild(span);
   }
 
-  // Type out the rest of the boot sequence with 25ms interval
   for (let i = 3; i < bootLines.length; i++) {
     await new Promise(resolve => {
       const span = document.createElement("span");
@@ -194,16 +197,14 @@ async function runBoot() {
           clearInterval(timer);
           resolve();
         }
-      }, 25); // updated interval
+      }, 25);
     });
   }
 
-  enableInputs(); // attach inputs + render cipher text
+  enableInputs();
 }
 
-/* =========================
-   Attach User Inputs ONLY
-========================= */
+/* Attach User Inputs */
 function enableInputs() {
   const lines = terminal.querySelectorAll(".terminal-line");
   let userLogStarted = false;
@@ -218,7 +219,7 @@ function enableInputs() {
         s.id = "user-key";
         s.className = "input-placeholder";
         s.contentEditable = true;
-        s.textContent = "45";
+        s.textContent = ""; // user must enter key
         s.addEventListener("input", update);
         line.appendChild(s);
       }
@@ -229,21 +230,18 @@ function enableInputs() {
         s.id = "user-keyword";
         s.className = "input-placeholder";
         s.contentEditable = true;
-        s.textContent = "BAMBOOZLE SWIPE";
+        s.textContent = ""; // user must enter keyword
         s.addEventListener("input", update);
         line.appendChild(s);
       }
     }
   });
 
-  update(); // render cipher text immediately
+  update();
 }
 
 runBoot();
 
-/* =========================
-   Dynamically rescale on window resize
-========================= */
 window.addEventListener("resize", () => {
   scaleFont();
   update();
