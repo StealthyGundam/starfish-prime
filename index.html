@@ -11,7 +11,7 @@
 <style>
 html, body {
   margin:0;
-  padding:0;
+  padding:20px;
   width:100%;
   height:100%;
   font-family:"IBM Plex Mono", monospace;
@@ -25,11 +25,6 @@ html, body {
   /* Global CRT look */
   text-shadow:0 0 2px #0f0, 0 0 4px #0f0;
   animation:flicker 2s infinite alternate;
-}
-
-#screen {
-  padding:20px;
-  min-height:100vh;
 }
 
 .terminal-line {
@@ -57,26 +52,10 @@ html, body {
 </head>
 <body>
 
-<div id="screen">
-  <div id="terminal"></div>
-  <div class="grid-wrapper" id="cipher-output"></div>
-</div>
+<div id="terminal"></div>
+<div class="grid-wrapper" id="cipher-output"></div>
 
 <script>
-/* ======================
-   AUTO FONT SCALING
-====================== */
-function scaleFont() {
-  const min = 12;
-  const max = 20;
-  const size = window.innerWidth / 70;
-  document.documentElement.style.fontSize =
-    Math.max(min, Math.min(size, max)) + "px";
-}
-
-window.addEventListener("resize", scaleFont);
-scaleFont();
-
 /* ======================
    CONFIG
 ====================== */
@@ -129,6 +108,34 @@ async function typeWrappedText(container, text) {
 }
 
 /* ======================
+   AUTO FIT FONT TO VIEW
+====================== */
+function fitFontToView() {
+  const lines = document.querySelectorAll('.terminal-line');
+  if (!lines.length) return;
+
+  let maxWidth = 0;
+  lines.forEach(line => {
+    maxWidth = Math.max(maxWidth, line.scrollWidth);
+  });
+
+  const horizontalPadding = 40; // body padding
+  const availableWidth = window.innerWidth - horizontalPadding;
+
+  const scale = availableWidth / maxWidth;
+  const baseFontSize = 16;
+
+  const newSize = Math.max(
+    10,
+    Math.min(22, baseFontSize * scale)
+  );
+
+  document.documentElement.style.fontSize = newSize + "px";
+}
+
+window.addEventListener("resize", fitFontToView);
+
+/* ======================
    CIPHER LOGIC
 ====================== */
 function decodeCipher() {
@@ -159,6 +166,7 @@ async function renderCipher() {
   cipherOutput.innerHTML = "";
   cipherOutput.style.opacity = "1";
   await typeWrappedText(cipherOutput, decodeCipher());
+  setTimeout(fitFontToView, 50);
 }
 
 /* ======================
@@ -215,7 +223,8 @@ async function runBoot() {
     await typeWrappedText(terminal, line);
   }
   enableInputs();
-  renderCipher();
+  await renderCipher();
+  setTimeout(fitFontToView, 50);
 }
 
 runBoot();
