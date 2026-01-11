@@ -8,7 +8,7 @@
 <style>
 html, body {
   margin: 0;
-  padding: 5px;
+  padding: 20px;
   font-family: "Courier New", monospace;
   background: #010;
   color: #0f0;
@@ -26,10 +26,10 @@ html, body {
   animation: flicker 2s infinite alternate;
 }
 
-/* Centered lines */
+/* Centered header lines */
 .centered {
   text-align: center;
-  animation: none; /* remove flicker/typewriter effect for header */
+  animation: none; /* remove flicker/typewriter effect */
 }
 
 /* Editable placeholders */
@@ -74,23 +74,22 @@ const terminal = document.getElementById("terminal");
    Boot Sequence
 ========================= */
 const bootLines = [
-  "PROJECT SUNDIAL OPERATING SYSTEM",
+  "PROJECT GUNDAM INDUSTRIES UNIFIED OPERATING SYSTEM",
   "COPYRIGHT 2026 GUNDAM INDUSTRIES",
-  "-Trespasser Management System-",
+  "-Gundam Trespasser Management System-",
   "==========================",
   "| Administrator Log:",
   "| >> Encryption Key: ■■■",
   "| >> Keyword: ■■■■■■■■■■",
   "==========================",
-  "> run:// calcs E:\\message.txt /P eveveryone:f",
-  "> run:// -encrypt message.txt",
-    "> LOG: Please enter correct decryption key and keyword for access..."
+  "> run:// calcs E:\\message.text /P eveveryone:f",
   "==========================",
   "| User Log:",
   "| >> Decryption Key: ■■■",
   "| >> Keyword: ■■■■■■■■■■",
   "==========================",
-
+  "> run:// search -locked terminal",
+  "> LOG: Please enter correct decryption key and keyword for access..."
 ];
 
 /* =========================
@@ -163,12 +162,10 @@ function scaleFont() {
   const scaleFactor = viewportWidth / longestWidth;
   const newFontSize = Math.min(defaultFontSize * scaleFactor, defaultFontSize);
   document.body.style.fontSize = newFontSize + "px";
-
-  update(); // re-render cipher text after font resize
 }
 
 /* =========================
-   Typewriter effect
+   Typewriter effect + boot
 ========================= */
 async function runBoot() {
   scaleFont(); // initial scaling
@@ -244,7 +241,10 @@ runBoot();
 /* =========================
    Dynamically rescale on window resize
 ========================= */
-window.addEventListener("resize", scaleFont);
+window.addEventListener("resize", () => {
+  scaleFont();
+  update(); // re-render cipher text after font resize
+});
 </script>
 
 </body>
