@@ -34,6 +34,12 @@ html, body {
   padding: 0 2px;
 }
 
+/* Cipher text block */
+#message-block {
+  white-space: pre-wrap; /* wrap long cipher text */
+  margin-top: 20px;
+}
+
 @keyframes flicker {
   0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; }
   20%,22%,24%,55% { opacity: 0.5; }
@@ -124,44 +130,6 @@ function typeLine(line) {
 }
 
 /* =========================
-   Attach User Inputs ONLY
-========================= */
-function enableInputs() {
-  const lines = terminal.querySelectorAll(".terminal-line");
-  let userLogStarted = false;
-
-  lines.forEach(line => {
-    if (line.textContent.includes("| User Log:")) userLogStarted = true;
-
-    if (userLogStarted) {
-      if (line.textContent.includes("| >> Decryption Key:")) {
-        line.textContent = "| >> Decryption Key: ";
-        const s = document.createElement("span");
-        s.id = "user-key";
-        s.className = "input-placeholder";
-        s.contentEditable = true;
-        s.textContent = "45";
-        s.addEventListener("input", update);
-        line.appendChild(s);
-      }
-
-      if (line.textContent.includes("| >> Keyword:")) {
-        line.textContent = "| >> Keyword: ";
-        const s = document.createElement("span");
-        s.id = "user-keyword";
-        s.className = "input-placeholder";
-        s.contentEditable = true;
-        s.textContent = "BAMBOOZLE SWIPE";
-        s.addEventListener("input", update);
-        line.appendChild(s);
-      }
-    }
-  });
-
-  update(); // render cipher text immediately after attaching inputs
-}
-
-/* =========================
    Render decrypted output
 ========================= */
 function renderMessage(text) {
@@ -169,10 +137,9 @@ function renderMessage(text) {
   if (!block) {
     block = document.createElement("div");
     block.id = "message-block";
-    block.style.marginTop = "20px";
     terminal.appendChild(block);
   }
-  block.textContent = text; // will wrap naturally
+  block.textContent = text; // wraps naturally
 }
 
 /* =========================
@@ -209,12 +176,50 @@ function update() {
 }
 
 /* =========================
+   Attach User Inputs ONLY
+========================= */
+function enableInputs() {
+  const lines = terminal.querySelectorAll(".terminal-line");
+  let userLogStarted = false;
+
+  lines.forEach(line => {
+    if (line.textContent.includes("| User Log:")) userLogStarted = true;
+
+    if (userLogStarted) {
+      if (line.textContent.includes("| >> Decryption Key:")) {
+        line.textContent = "| >> Decryption Key: ";
+        const s = document.createElement("span");
+        s.id = "user-key";
+        s.className = "input-placeholder";
+        s.contentEditable = true;
+        s.textContent = "45";
+        s.addEventListener("input", update);
+        line.appendChild(s);
+      }
+
+      if (line.textContent.includes("| >> Keyword:")) {
+        line.textContent = "| >> Keyword: ";
+        const s = document.createElement("span");
+        s.id = "user-keyword";
+        s.className = "input-placeholder";
+        s.contentEditable = true;
+        s.textContent = "BAMBOOZLE SWIPE";
+        s.addEventListener("input", update);
+        line.appendChild(s);
+      }
+    }
+  });
+
+  update(); // render cipher text immediately
+}
+
+/* =========================
    Run Boot Sequence
 ========================= */
 (async function runBoot() {
   scaleFont(); // scale font size for longest boot line
   for (const line of bootLines) await typeLine(line);
-  enableInputs(); // attach editable fields and render cipher immediately
+  enableInputs(); // attach inputs and render wrapped cipher text immediately
 })();
 </script>
 
