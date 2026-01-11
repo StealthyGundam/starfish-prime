@@ -15,16 +15,14 @@ html, body {
   line-height: 1.2;
   user-select: none;
   overflow-y: auto;
-  overflow-x: hidden; /* prevent horizontal scroll */
+  overflow-x: hidden;
   text-shadow: 0 0 2px #0f0, 0 0 4px #0f0;
-  word-wrap: break-word; /* allow wrapping */
-  white-space: pre-wrap; /* wrap long lines */
 }
 
 /* Typed terminal lines */
 .terminal-line {
   display: block;
-  white-space: pre-wrap;
+  white-space: pre-wrap; /* wrap long lines */
   animation: flicker 2s infinite alternate;
 }
 
@@ -158,12 +156,10 @@ function enableInputs() {
   let userLogStarted = false;
 
   lines.forEach(line => {
-    /* Detect start of user log */
     if (line.textContent.includes("| User Log:")) {
       userLogStarted = true;
     }
 
-    /* Only attach editable fields after user log starts */
     if (userLogStarted) {
       if (line.textContent.includes("| >> Decryption Key:")) {
         line.textContent = "| >> Decryption Key: ";
@@ -189,8 +185,19 @@ function enableInputs() {
     }
   });
 
-  /* Initial render */
-  update();
+  update(); // render cipher immediately
 }
 
-/* ======*
+/* =========================
+   Run Boot Sequence
+========================= */
+(async function runBoot() {
+  for (const line of bootLines) {
+    await typeLine(line);
+  }
+  enableInputs();
+})();
+</script>
+
+</body>
+</html>
