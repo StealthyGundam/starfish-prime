@@ -150,36 +150,42 @@ function typeLine(line) {
 }
 
 /* =========================
-   Attach User Inputs
+   Attach User Inputs ONLY
 ========================= */
 function enableInputs() {
   const lines = terminal.querySelectorAll(".terminal-line");
-  let userKeywordAttached = false;
+  let userLogStarted = false;
 
   lines.forEach(line => {
-    /* User decryption key */
-    if (line.textContent.includes("| >> Decryption Key:")) {
-      line.textContent = "| >> Decryption Key: ";
-      const s = document.createElement("span");
-      s.id = "user-key";
-      s.className = "input-placeholder";
-      s.contentEditable = true;
-      s.textContent = "45";
-      s.addEventListener("input", update);
-      line.appendChild(s);
+
+    /* Detect start of user log */
+    if (line.textContent.includes("| User Log:")) {
+      userLogStarted = true;
     }
 
-    /* User keyword (editable) */
-    if (line.textContent.includes("| >> Keyword:") && !userKeywordAttached) {
-      userKeywordAttached = true;
-      line.textContent = "| >> Keyword: ";
-      const s = document.createElement("span");
-      s.id = "user-keyword";
-      s.className = "input-placeholder";
-      s.contentEditable = true;
-      s.textContent = "BAMBOOZLE SWIPE";
-      s.addEventListener("input", update);
-      line.appendChild(s);
+    /* Only attach editable fields after user log starts */
+    if (userLogStarted) {
+      if (line.textContent.includes("| >> Decryption Key:")) {
+        line.textContent = "| >> Decryption Key: ";
+        const s = document.createElement("span");
+        s.id = "user-key";
+        s.className = "input-placeholder";
+        s.contentEditable = true;
+        s.textContent = "45";
+        s.addEventListener("input", update);
+        line.appendChild(s);
+      }
+
+      if (line.textContent.includes("| >> Keyword:")) {
+        line.textContent = "| >> Keyword: ";
+        const s = document.createElement("span");
+        s.id = "user-keyword";
+        s.className = "input-placeholder";
+        s.contentEditable = true;
+        s.textContent = "BAMBOOZLE SWIPE";
+        s.addEventListener("input", update);
+        line.appendChild(s);
+      }
     }
   });
 
