@@ -53,7 +53,6 @@ html, body {
 }
 </style>
 </head>
-
 <body>
 
 <div id="terminal"></div>
@@ -64,13 +63,13 @@ html, body {
 ========================= */
 const MOD = 29n;
 const BASE_ALPHABET = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ ,."];
-const ENCRYPTION_KEY = 23n;  // Prime exponent used to encrypt
+const ENCRYPTION_KEY = 23n;  // prime exponent used for encryption
 const CIPHER_TEXT = "TGVN,XOWVTHNVA, SDV IGFV OGVNT X,EGFVLSOWNVEHMVHOVPTGVM  O,HWTP.VSVBS,SEHOVISMBHFGVTGVRS,DGEVRHPTV SPTVSOEVTXOWGFVUS,SOAGEVUZVLSHPT.VPTGVAHPZVDOGRVTHNVIHWH,VSOEVLG,PVNSLGFVSPVOHWTP.VGMBPZVNPFGGPNVNHWTGEVSNVTGVEGBSFPGEVP VNGFIGVSVYXHGPVAS,,V LVEXPZ.VS,,GZNVFGMGMUGFGEVTHNVNMH,GVTHNVMGFAZVTHNVNPGG,VFGN I,G.VL FVO RVTGVRSNVW OGVUXPVTHNVBF MHNGVFGMSHOGE.VPTGVM  OVRHPOGNNVSOEVU,GNNGEVTHNVFHWTPG XNVBSPT.";
-
-/* Correct keyword */
 const CORRECT_KEYWORD = "SUNBLOCKER";
 
-/* Calculate decryption key as modular multiplicative inverse of ENCRYPTION_KEY mod (MOD-1) */
+/* =========================
+   Modular Inverse to get decryption key
+========================= */
 function modInverse(a, m) {
   let m0 = m, x0 = 0n, x1 = 1n;
   if (m === 1n) return 0n;
@@ -111,8 +110,30 @@ const bootLines = [
 ];
 
 /* =========================
-   Render decrypted output
+   Terminal and Cipher Rendering
 ========================= */
+const terminal = document.getElementById("terminal");
+
+function scaleFont() {
+  const tempSpan = document.createElement("span");
+  tempSpan.style.position = "absolute";
+  tempSpan.style.visibility = "hidden";
+  tempSpan.style.whiteSpace = "pre";
+  document.body.appendChild(tempSpan);
+  let longestWidth = 0;
+  bootLines.forEach(line => {
+    tempSpan.textContent = line;
+    const w = tempSpan.offsetWidth;
+    if (w > longestWidth) longestWidth = w;
+  });
+  document.body.removeChild(tempSpan);
+  const viewportWidth = window.innerWidth - 40;
+  const defaultFontSize = 16;
+  const scaleFactor = viewportWidth / longestWidth;
+  const newFontSize = Math.min(defaultFontSize * scaleFactor, defaultFontSize);
+  document.body.style.fontSize = newFontSize + "px";
+}
+
 function renderMessage(text) {
   let block = document.getElementById("message-block");
   if (!block) {
@@ -125,27 +146,21 @@ function renderMessage(text) {
 }
 
 /* =========================
-   Decryption + Lock Check
+   Decrypt + Lock Inputs
 ========================= */
 function update() {
   const keyEl = document.getElementById("user-key");
-  const kwEl  = document.getElementById("user-keyword");
+  const kwEl = document.getElementById("user-keyword");
   if (!keyEl || !kwEl) return;
 
   const keyVal = keyEl.textContent.trim() || "0";
-  const kwVal  = kwEl.textContent.trim().toUpperCase();
+  const kwVal = kwEl.textContent.trim().toUpperCase();
 
   const key = BigInt(keyVal);
-
   const seen = new Set();
-  const keyChars = [...kwVal].filter(c =>
-    BASE_ALPHABET.includes(c) && !seen.has(c) && seen.add(c)
-  );
+  const keyChars = [...kwVal].filter(c => BASE_ALPHABET.includes(c) && !seen.has(c) && seen.add(c));
 
-  const cipherAlphabet = [
-    ...keyChars,
-    ...BASE_ALPHABET.filter(c => !keyChars.includes(c))
-  ];
+  const cipherAlphabet = [...keyChars, ...BASE_ALPHABET.filter(c => !keyChars.includes(c))];
 
   let output = "";
   for (const char of CIPHER_TEXT) {
@@ -166,113 +181,49 @@ function update() {
 }
 
 /* =========================
-   Scale font based on longest boot line
+   Build Boot Sequence + Inputs
 ========================= */
-function scaleFont() {
-  const tempSpan = document.createElement("span");
-  tempSpan.style.position = "absolute";
-  tempSpan.style.visibility = "hidden";
-  tempSpan.style.whiteSpace = "pre";
-  document.body.appendChild(tempSpan);
-
-  let longestWidth = 0;
-  bootLines.forEach(line => {
-    tempSpan.textContent = line;
-    const w = tempSpan.offsetWidth;
-    if (w > longestWidth) longestWidth = w;
-  });
-
-  document.body.removeChild(tempSpan);
-
-  const viewportWidth = window.innerWidth - 40;
-  const defaultFontSize = 16;
-  const scaleFactor = viewportWidth / longestWidth;
-  const newFontSize = Math.min(defaultFontSize * scaleFactor, defaultFontSize);
-  document.body.style.fontSize = newFontSize + "px";
-}
-
-/* =========================
-   Typewriter + Boot
-========================= */
-async function runBoot() {
+function buildBoot() {
   scaleFont();
-
-  // Render first three lines instantly and centered
-  for (let i = 0; i < 3; i++) {
+  bootLines.forEach((line, i) => {
     const span = document.createElement("span");
-    span.className = "terminal-line centered";
-    span.textContent = bootLines[i];
+    span.className = "terminal-line";
+    if (i < 3) span.classList.add("centered"); // center header
+    span.textContent = line;
     terminal.appendChild(span);
-  }
 
-  // Type out the rest of the boot sequence
-  for (let i = 3; i < bootLines.length; i++) {
-    await new Promise(resolve => {
-      const span = document.createElement("span");
-      span.className = "terminal-line";
-      terminal.appendChild(span);
-      let j = 0;
-      const timer = setInterval(() => {
-        span.textContent += bootLines[i][j++];
-        if (j >= bootLines[i].length) {
-          clearInterval(timer);
-          resolve();
-        }
-      }, 25);
-    });
-  }
+    // Add editable inputs only for user fields
+    if (line.includes("| >> Decryption Key:")) {
+      span.textContent = "| >> Decryption Key: ";
+      const s = document.createElement("span");
+      s.id = "user-key";
+      s.className = "input-placeholder";
+      s.contentEditable = true;
+      s.textContent = "";
+      s.addEventListener("input", update);
+      span.appendChild(s);
+    }
 
-  // Attach inputs + render cipher text initially
-  enableInputs();
-}
-
-/* =========================
-   Attach User Inputs
-========================= */
-function enableInputs() {
-  const lines = terminal.querySelectorAll(".terminal-line");
-  let userLogStarted = false;
-
-  lines.forEach(line => {
-    if (line.textContent.includes("| User Log:")) userLogStarted = true;
-
-    if (userLogStarted) {
-      if (line.textContent.includes("| >> Decryption Key:")) {
-        line.textContent = "| >> Decryption Key: ";
-        const s = document.createElement("span");
-        s.id = "user-key";
-        s.className = "input-placeholder";
-        s.contentEditable = true;
-        s.textContent = ""; // empty initially
-        s.addEventListener("input", update);
-        line.appendChild(s);
-      }
-
-      if (line.textContent.includes("| >> Keyword:")) {
-        line.textContent = "| >> Keyword: ";
-        const s = document.createElement("span");
-        s.id = "user-keyword";
-        s.className = "input-placeholder";
-        s.contentEditable = true;
-        s.textContent = ""; // empty initially
-        s.addEventListener("input", update);
-        line.appendChild(s);
-      }
+    if (line.includes("| >> Keyword:")) {
+      span.textContent = "| >> Keyword: ";
+      const s = document.createElement("span");
+      s.id = "user-keyword";
+      s.className = "input-placeholder";
+      s.contentEditable = true;
+      s.textContent = "";
+      s.addEventListener("input", update);
+      span.appendChild(s);
     }
   });
 
-  // Render cipher text immediately with default empty inputs
+  // Render cipher text immediately
   update();
 }
 
 /* =========================
-   Run boot sequence
+   Initialize
 ========================= */
-runBoot();
-
-/* =========================
-   Re-scale on window resize
-========================= */
+buildBoot();
 window.addEventListener("resize", () => {
   scaleFont();
   update();
