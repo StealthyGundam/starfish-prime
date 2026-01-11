@@ -79,10 +79,9 @@ const bootLines = [
 ];
 
 /* =========================
-   Measure longest line and scale font
+   Scale font based on longest boot line
 ========================= */
 function scaleFont() {
-  // Create a temporary span to measure text width
   const tempSpan = document.createElement("span");
   tempSpan.style.position = "absolute";
   tempSpan.style.visibility = "hidden";
@@ -98,8 +97,7 @@ function scaleFont() {
 
   document.body.removeChild(tempSpan);
 
-  // Calculate scale factor to fit viewport width (minus padding)
-  const viewportWidth = window.innerWidth - 40; // 20px padding each side
+  const viewportWidth = window.innerWidth - 40; // padding buffer
   const defaultFontSize = 16; // px
   const scaleFactor = viewportWidth / longestWidth;
   const newFontSize = Math.min(defaultFontSize * scaleFactor, defaultFontSize);
@@ -160,7 +158,7 @@ function enableInputs() {
     }
   });
 
-  update(); // render cipher immediately
+  update(); // render cipher text immediately after attaching inputs
 }
 
 /* =========================
@@ -174,7 +172,7 @@ function renderMessage(text) {
     block.style.marginTop = "20px";
     terminal.appendChild(block);
   }
-  block.textContent = text;
+  block.textContent = text; // will wrap naturally
 }
 
 /* =========================
@@ -214,9 +212,9 @@ function update() {
    Run Boot Sequence
 ========================= */
 (async function runBoot() {
-  scaleFont(); // scale font based on longest boot line
+  scaleFont(); // scale font size for longest boot line
   for (const line of bootLines) await typeLine(line);
-  enableInputs();
+  enableInputs(); // attach editable fields and render cipher immediately
 })();
 </script>
 
